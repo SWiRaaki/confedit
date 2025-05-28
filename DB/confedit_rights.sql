@@ -19,7 +19,7 @@ CREATE TABLE std_db_version (
 -- User table
 CREATE TABLE std_user (
   id SERIAL PRIMARY KEY,
-  uuid UUID NOT NULL UNIQUE,
+  ext_id UUID NOT NULL UNIQUE,
   name VARCHAR(32) NOT NULL,
   abbreviation VARCHAR(6),
   pass CHAR(64) NOT NULL
@@ -28,7 +28,7 @@ CREATE TABLE std_user (
 -- Group table
 CREATE TABLE std_group (
   id SERIAL PRIMARY KEY,
-  uuid UUID NOT NULL UNIQUE,
+  ext_id UUID NOT NULL UNIQUE,
   name VARCHAR(32) NOT NULL,
   abbreviation VARCHAR(6),
   description VARCHAR(256)
@@ -50,7 +50,7 @@ INSERT INTO std_access (bitflag, name) VALUES
 -- Scope table
 CREATE TABLE std_scope (
   id SERIAL PRIMARY KEY,
-  uuid UUID NOT NULL UNIQUE,
+  ext_id UUID NOT NULL UNIQUE,
   name VARCHAR(32) NOT NULL,
   namespace VARCHAR(32)
 );
@@ -58,7 +58,7 @@ CREATE TABLE std_scope (
 -- Rule table
 CREATE TABLE std_rule (
   id SERIAL PRIMARY KEY,
-  uuid UUID NOT NULL UNIQUE,
+  ext_id UUID NOT NULL UNIQUE,
   name VARCHAR(32) NOT NULL,
   namespace VARCHAR(32)
 );
@@ -66,21 +66,21 @@ CREATE TABLE std_rule (
 -- Grouping table: users assigned to groups
 CREATE TABLE std_grouping (
   id SERIAL PRIMARY KEY,
-  uuid_user UUID NOT NULL,
-  uuid_group UUID NOT NULL,
-  CONSTRAINT fk_grouping_user FOREIGN KEY (uuid_user) REFERENCES std_user (uuid),
-  CONSTRAINT fk_grouping_group FOREIGN KEY (uuid_group) REFERENCES std_group (uuid)
+  ext_id_user UUID NOT NULL,
+  ext_id_group UUID NOT NULL,
+  CONSTRAINT fk_grouping_user FOREIGN KEY (ext_id_user) REFERENCES std_user (ext_id),
+  CONSTRAINT fk_grouping_group FOREIGN KEY (ext_id_group) REFERENCES std_group (ext_id)
 );
 
 -- Authorization table: rules for user/group on a scope
 CREATE TABLE std_authorization (
   id SERIAL PRIMARY KEY,
-  uuid UUID NOT NULL,
+  ext_id UUID NOT NULL,
   access INTEGER NOT NULL,
   scope UUID NOT NULL,
   rule UUID NOT NULL,
-  CONSTRAINT fk_auth_scope FOREIGN KEY (scope) REFERENCES std_scope (uuid),
-  CONSTRAINT fk_auth_rule FOREIGN KEY (rule) REFERENCES std_rule (uuid)
+  CONSTRAINT fk_auth_scope FOREIGN KEY (scope) REFERENCES std_scope (ext_id),
+  CONSTRAINT fk_auth_rule FOREIGN KEY (rule) REFERENCES std_rule (ext_id)
 );
 
 -- Insert initial DB version
