@@ -2,20 +2,24 @@
 using System.Net;
 using System.Net.WebSockets;
 
-static class Program {
-	static Program() {
+static class Program 
+{
+	static Program() 
+	{
 		Clients = new();
 		Listener = new();
 	}
 
-	static async Task Main( string[] args ) {
+	static async Task Main( string[] args ) 
+	{
 
-		Console.WriteLine( "ConfEdit Server V0.1.0 startup.." );
+		Console.WriteLine( "ConfE dit Server V0.1.0 startup.." );
 
 		Listener.Prefixes.Add( "http://localhost:42069/" );
 		Listener.Start();
 
-		while ( true ) {
+		while ( true ) 
+		{
 			var context = await Listener.GetContextAsync();
 			if (context.Request.IsWebSocketRequest)
 			{

@@ -2,8 +2,11 @@
 using System.Net.WebSockets;
 using System.Text;
 
-public class CEClient {
-	public CEClient( Guid id, WebSocket socket ) {
+public class CEClient 
+{
+
+	public CEClient( Guid id, WebSocket socket ) 
+    {
 		ID = id;
 		mySocket = socket;
 	}
