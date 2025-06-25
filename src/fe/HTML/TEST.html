@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h2>WebSocket Client</h2>
+
+    <button onclick="connectWebSocket()">Connect</button>
+    <button onclick="closeWebSocket()">Close</button>
+    <br><br>
+
+    <input type="text" id="messageInput" placeholder="Enter message">
+    <button onclick="sendMessage()">Send Message</button>
+
+    <pre id="log"></pre>
+
+    <script>let socket = null;
+        const log = document.getElementById("log");
+
+        function logMessage(message) {
+            log.innerText += message + "\n";
+        }
+
+        function connectWebSocket() {
+            if (socket !== null && socket.readyState === WebSocket.OPEN) {
+                logMessage("Already connected.");
+                return;
+            }
+
+            socket = new WebSocket("ws://localhost:42069"); // Adjust URL if needed
+
+            socket.addEventListener("open", () => {
+                logMessage("Connected to WebSocket server.");
+            });
+
+            socket.addEventListener("message", (event) => {
+                logMessage("Message from server: " + event.data);
+            });
+
+            socket.addEventListener("close", () => {
+                logMessage("WebSocket connection closed.");
+            });
+
+            socket.addEventListener("error", (error) => {
+                logMessage("WebSocket error: " + error);
+            });
+        }
+
+        function closeWebSocket() {
+            if (socket) {
+                socket.close();
+                logMessage("Closing connection...");
+                socket = null;
+            } else {
+                logMessage("No active WebSocket connection.");
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById("messageInput").value;
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(message);
+                logMessage("Sent: " + message);
+            } else {
+                logMessage("WebSocket not connected.");
+            }
+        }</script>
+</body>
+</html>
