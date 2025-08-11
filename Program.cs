@@ -40,22 +40,33 @@ static class Program {
 		}
 	}
 
-	static async Task RunDatabaseUpgrade() {
-		Console.WriteLine( "Searching for database upgrades.." );
-		string [] stdfiles = Directory.GetFiles( "sql", "std_*.sql" );
-		for ( int i = 0; i < stdfiles.Length; ++i ) {
-			Console.WriteLine( $"Upgrade found: {stdfiles[i]}" );
-			try {
-				Database.Execute( File.ReadAllText( stdfiles[i] ) );
-			} catch (Exception e) {
-				Console.WriteLine( $"Something went wrong executing upgrade {stdfiles[i]}:" );
-				Console.WriteLine( e.Message );
-			}
-		}
-		Console.WriteLine( $"Finished! Applied {stdfiles.Length} upgrades" );
-	}
+    static async Task RunDatabaseUpgrade() {
+        Console.WriteLine( "Searching for database upgrades.." );
+		// test
+        string sqlDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "sql");
+        sqlDir = Path.GetFullPath(sqlDir);
 
-	public static Database Database { get; private set; }
+        if (!Directory.Exists( sqlDir ) )
+        {
+            Console.WriteLine( $"SQL folder not found: {sqlDir}" );
+            return;
+        }
+
+        string[] stdfiles = Directory.GetFiles( sqlDir, "std_*.sql" );
+
+        for ( int i = 0; i < stdfiles.Length; ++i ) {
+            Console.WriteLine( $"Upgrade found: {stdfiles[i]}" );
+            try {
+                Database.Execute( File.ReadAllText( stdfiles[i] ) );
+            } catch (Exception e) {
+                Console.WriteLine( $"Something went wrong executing upgrade {stdfiles[i]}:" );
+                Console.WriteLine( e.Message );
+            }
+        }
+        Console.WriteLine( $"Finished! Applied {stdfiles.Length} upgrades" );
+    }
+
+    public static Database Database { get; private set; }
 	public static ConcurrentDictionary<Guid, CEClient> Clients { get; private set; }
 	public static HttpListener Listener { get; private set; }
 }

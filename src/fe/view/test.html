@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebSocket Test</title>
+    <style>
+        .hint {
+            font-size: 0.9em;
+            margin-top: 0.2em;
+        }
+
+            .hint.error {
+                color: red;
+            }
+
+            .hint.ok {
+                color: green;
+            }
+
+        .errorBox {
+            background: #fdd;
+            padding: 1em;
+            margin: 1em 0;
+            border: 1px solid red;
+        }
+    </style>
+</head>
+<body>
+    <h2>WebSocket Client & Validierung</h2>
+
+    <div id="globalErrors"></div>
+
+    <button id="connectBtn">Connect</button>
+    <button id="closeBtn">Close</button>
+    <br /><br />
+
+    <input type="text"
+           id="messageInput"
+           placeholder="Enter message"
+           data-rules="required|minLength:3|maxLength:15" />
+    <button id="sendBtn">Send Message</button>
+
+    <pre id="log" style="background:#eee; padding:1em; height:200px; overflow:auto;"></pre>
+
+    <script src="errors.js"></script>
+    <script src="site.js"></script>
+</body>
+</html>
