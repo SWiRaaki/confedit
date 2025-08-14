@@ -13,9 +13,9 @@ static class Program {
 
 	static async Task Main( string[] args ) {
 		Console.WriteLine( "ConfEdit Server V0.1.0" );
-		await RunDatabaseUpgrade();
+		//await RunDatabaseUpgrade();
 
-		Listener.Prefixes.Add( "http://localhost:42069/" );
+		Listener.Prefixes.Add( "http://*:42069/" );
 		Listener.Start();
 
 		while ( true ) {
@@ -23,10 +23,10 @@ static class Program {
 			if (context.Request.IsWebSocketRequest)
 			{
 				var wsContext = await context.AcceptWebSocketAsync(null);
-				WebSocket webSocket = wsContext.WebSocket;
-				Guid clientId = Guid.NewGuid();
+			WebSocket webSocket = wsContext.WebSocket;
+			Guid clientId = Guid.NewGuid();
 
-				CEClient client = new CEClient( clientId, webSocket );
+				Client client = new Client( clientId, webSocket );
 				Clients.TryAdd( clientId, client );
 				Console.WriteLine($"Client connected: {clientId} (Total: {Clients.Count})");
 
@@ -56,6 +56,6 @@ static class Program {
 	}
 
 	public static Database Database { get; private set; }
-	public static ConcurrentDictionary<Guid, CEClient> Clients { get; private set; }
+	public static ConcurrentDictionary<Guid, Client> Clients { get; private set; }
 	public static HttpListener Listener { get; private set; }
 }
