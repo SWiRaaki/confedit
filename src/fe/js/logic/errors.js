@@ -1,4 +1,4 @@
-// Err Handler example 10.08 - 11.08.25
+//TODO error handle 
 
 (() => {
     // Validation rules

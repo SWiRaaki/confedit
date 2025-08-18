@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versionsverlauf - Konfigurationseditor</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main_html.html">Datei</a></li>
+                <li><a href="versionen_html.html">Versionen</a></li>
+                <li><a href="benutzer_html.html">Benutzer</a></li>
+                <li><a href="hilfe_html.html">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h1>Versionsverlauf</h1>
+            <p>Datei: config_json.json</p>
+
+            <h2>Versionen</h2>
+            <div>
+                <div>
+                    <input type="radio" id="version1" name="version-select" value="1">
+                    <label for="version1">
+                        <strong>12:00 - Version 1</strong><br>
+                        Erstellt von admin | 2.8 kB
+                    </label>
+                </div>
+
+                <div>
+                    <input type="radio" id="version2" name="version-select" value="2">
+                    <label for="version2">
+                        <strong>12:05 - Version 2</strong><br>
+                        Bearbeitet von user1 | 2.7 kB
+                    </label>
+                </div>
+
+                <div>
+                    <input type="radio" id="version3" name="version-select" value="3" checked>
+                    <label for="version3">
+                        <strong>12:10 - Version 3 (aktuell)</strong><br>
+                        Bearbeitet von admin | 2.8 kB
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <button type="button" id="compare-versions">📊 Versionen vergleichen</button>
+                <button type="button" id="restore-version">🔄 Version wiederherstellen</button>
+                <button type="button" onclick="window.history.back()">← Zurück</button>
+            </div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>

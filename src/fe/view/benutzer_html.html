@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benutzer & Rechte - Konfigurationseditor</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main_html.html">Datei</a></li>
+                <li><a href="versionen_html.html">Versionen</a></li>
+                <li><a href="benutzer_html.html">Benutzer</a></li>
+                <li><a href="hilfe_html.html">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h1>Benutzer & Rechte</h1>
+
+            <div>
+                <button type="button" id="add-user">➕ Neuen Benutzer hinzufügen</button>
+            </div>
+
+            <table id="user-table">
+                <thead>
+                    <tr>
+                        <th>Benutzer</th>
+                        <th>Rolle</th>
+                        <th>Erstellen</th>
+                        <th>Lesen</th>
+                        <th>Ändern</th>
+                        <th>Löschen</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>admin</td>
+                        <td>Administrator</td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td>
+                            <button type="button" class="edit-user">✏️</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>user1</td>
+                        <td>Editor</td>
+                        <td><input type="checkbox"></td>
+                        <td><input type="checkbox" checked></td>
+                        <td><input type="checkbox" checked></td>
+                        <td><input type="checkbox"></td>
+                        <td>
+                            <button type="button" class="edit-user">✏️</button>
+                            <button type="button" class="delete-user">🗑️</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>user2</td>
+                        <td>Viewer</td>
+                        <td><input type="checkbox"></td>
+                        <td><input type="checkbox" checked></td>
+                        <td><input type="checkbox"></td>
+                        <td><input type="checkbox"></td>
+                        <td>
+                            <button type="button" class="edit-user">✏️</button>
+                            <button type="button" class="delete-user">🗑️</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <section>
+                <h2>Rollen-Vorlagen</h2>
+                <div>
+                    <button type="button">⭐ Administrator</button>
+                    <button type="button">✏️ Editor</button>
+                    <button type="button">👁️ Viewer</button>
+                </div>
+            </section>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>

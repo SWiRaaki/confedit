@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konfigurationseditor - Hauptseite</title>
+    <style>
+        .hint {
+            font-size: .9em;
+            margin-top: 4px
+        }
+
+            .hint.error {
+                color: #b3261e
+            }
+
+            .hint.ok {
+                color: #1e7a34
+            }
+
+        .errorBox {
+            border: 1px solid #b3261e;
+            color: #b3261e;
+            padding: 8px;
+            margin: 8px 0
+        }
+
+        .ws-panel {
+            border: 1px dashed #aaa;
+            padding: 8px;
+            margin-top: 16px
+        }
+
+            .ws-panel pre {
+                max-height: 140px;
+                overflow: auto;
+                background: #f7f7f7;
+                padding: 8px
+            }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main_html.html">Datei</a></li>
+                <li><a href="versionen_html.html">Versionen</a></li>
+                <li><a href="benutzer_html.html">Benutzer</a></li>
+                <li><a href="hilfe_html.html">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div>
+            <section>
+                <h2>Dateibaum</h2>
+                <div>
+                    <label for="datei-suche">Datei suchen:</label>
+                    <input type="search" id="datei-suche" placeholder="Datei suchen...">
+                </div>
+                <div>
+                    <h3>Mockup</h3>
+                    <ul>
+                        <li>📄 config_json.json</li>
+                        <li>📄 config.yaml</li>
+                        <li>📄 config.xml</li>
+                        <li>📄 config.ini</li>
+                        <li>📄 config.toml</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>Willkommen im Konfigurationseditor</h2>
+                <p>Bitte wählen Sie eine Datei im Dateibaum aus, um sie anzuzeigen oder zu bearbeiten.</p>
+
+                <div id="globalErrors"></div>
+
+                <form id="configForm" data-module="verifier" data-function="verify_numeric">
+                    <fieldset>
+                        <legend>Konfiguration bearbeiten</legend>
+
+                        <div>
+                            <label for="boolean-option">Feature aktivieren:</label>
+                            <input type="checkbox" id="boolean-option" name="boolean-option">
+                        </div>
+
+                        <div>
+                            <label for="string-field">Server Name:</label>
+                            <input type="text" id="string-field" name="string-field"
+                                   placeholder="server.example.com"
+                                   data-rules="required|minLength:3|maxLength:255">
+                        </div>
+
+                        <div>
+                            <label for="number-picker">Port:</label>
+                            <input type="number" id="number-picker" name="number-picker"
+                                   min="1" max="65535" value="8080"
+                                   data-rules="required|checkPortServer">
+                        </div>
+
+                        <div>
+                            <label for="date-picker">Gültig bis:</label>
+                            <input type="date" id="date-picker" name="date-picker">
+                        </div>
+
+                        <div>
+                            <button type="button">Bearbeiten</button>
+                            <button type="button">Versionen</button>
+                            <button type="submit" id="btnSubmit">Absenden</button>
+                            <button type="button" id="btnCancel">Abbrechen</button>
+                        </div>
+                    </fieldset>
+                </form>
+
+                <div class="ws-panel">
+                    <h3>WebSocket Test</h3>
+                    <div>
+                        <button id="connectBtn">Verbinden (Validierungs-WS)</button>
+                        <button id="closeBtn" disabled>Trennen</button>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <input id="messageInput" type="text" placeholder='{"ping":"pong"}' disabled>
+                        <button id="sendBtn" disabled>Senden</button>
+                    </div>
+                    <pre id="log"></pre>
+                </div>
+
+            </section>
+
+            <section>
+                <h2>Aktionen</h2>
+                <div>
+                    <button type="button">Neue Datei erstellen</button>
+                    <button type="button">Datei hochladen</button>
+                </div>
+
+                <div>
+                    <h3>Zuletzt bearbeitet</h3>
+                    <ul>
+                        <li>config.json</li>
+                        <li>config.yaml</li>
+                        <li>config.ini</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/errors.js"></script>
+    <script src="js/dataSender.js"></script>
+    <script src="js/site.js"></script>
+</body>
+</html>

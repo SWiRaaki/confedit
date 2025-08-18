@@ -1,10 +1,14 @@
-//TEST TODO
 document.addEventListener("DOMContentLoaded", () => {
     const log = document.getElementById("log");
     const connectBtn = document.getElementById("connectBtn");
     const closeBtn = document.getElementById("closeBtn");
     const sendBtn = document.getElementById("sendBtn");
     const messageInput = document.getElementById("messageInput");
+
+    if (!connectBtn || !closeBtn || !sendBtn || !messageInput || !log) {
+        return;
+    }
+
     let socket = null;
 
     function logMessage(msg) {
