@@ -10,34 +10,35 @@ function serializeForm(form) {
     const data = {};
     const elements = Array.from(form.elements).filter(el => el.name && !el.disabled);
 
+    // hier keine einzelne felder auslesen, wir lesen und packen in json komplette datei! 
     for (const el of elements) {
         const name = el.name;
         const type = (el.type || "").toLowerCase();
 
-        if (type === "radio") {
-            if (!el.checked) continue;
-            data[name] = el.value;
-            continue;
-        }
+        //if (type === "radio") {
+        //    if (!el.checked) continue;
+        //    data[name] = el.value;
+        //    continue;
+        //}
 
-        if (type === "checkbox") {
-            data[name] = !!el.checked;
-            continue;
-        }
+        //if (type === "checkbox") {
+        //    data[name] = !!el.checked;
+        //    continue;
+        //}
 
-        if (type === "number") {
-            if (el.value === "") { data[name] = null; }
-            else {
-                const num = Number(el.value);
-                data[name] = Number.isFinite(num) ? num : null;
-            }
-            continue;
-        }
+        //if (type === "number") {
+        //    if (el.value === "") { data[name] = null; }
+        //    else {
+        //        const num = Number(el.value);
+        //        data[name] = Number.isFinite(num) ? num : null;
+        //    }
+        //    continue;
+        //}
 
-        if (type === "date") {
-            data[name] = el.value || null;
-            continue;
-        }
+        //if (type === "date") {
+        //    data[name] = el.value || null;
+        //    continue;
+        //}
 
         data[name] = el.value;
     }

@@ -1,4 +1,7 @@
-//TODO error handle 
+//TODO error handle
+
+// ERR.JS muss gar nichts validieren, sondern NUR zeige Fehler dem User
+// ICH BEKOMME FEHLER VON SERVER, DIE MUSS ZEIGEN
 
 (() => {
     // Validation rules
@@ -8,11 +11,11 @@
         maxLength: (len) => (val) => val.length <= len || `Maximal ${len} Zeichen.`,
         ipv4: (val) => {
             const ipv4Regex = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)(\.(25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/;
-            return ipv4Regex.test(val) || "Ungültige IPv4-Adresse.";
+            return ipv4Regex.test(val) || "Ungueltige IPv4-Adresse.";
         },
         ipv6: (val) => {
             const ipv6Regex = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|::1)$/i;
-            return ipv6Regex.test(val) || "Ungültige IPv6-Adresse.";
+            return ipv6Regex.test(val) || "Ungueltige IPv6-Adresse.";
         },
         checkPortServer: async (val) => {
             const res = await sendServerCheck({ type: "checkPort", port: parseInt(val, 10) });
@@ -90,32 +93,6 @@
                 resolve({ valid: false, message: "Sendefehler" });
             }
         });
-    }
-
-    // Validation 
-    async function validate(el) {
-        const val = el.value;
-        const fieldRules = el.dataset.rules ? el.dataset.rules.split("|") : [];
-
-        for (let rule of fieldRules) {
-            let fn;
-            if (rule.includes(":")) {
-                const [name, arg] = rule.split(":");
-                fn = rules[name] ? rules[name](isNaN(arg) ? arg : parseInt(arg, 10)) : null;
-            } else {
-                fn = rules[rule];
-            }
-            if (!fn) continue;
-
-            let result = fn(val);
-            if (result instanceof Promise) result = await result;
-            if (result !== true) {
-                setError(el, result);
-                return false;
-            }
-        }
-        clearError(el);
-        return true;
     }
 
     // Init 
