@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Net.WebSockets;
 using System.Text;
 using Newtonsoft.Json;
@@ -102,11 +103,18 @@ internal class Client {
 		ReadResult result = await ReadMessage();
 		if ( result.Type != WebSocketMessageType.Text )
 			return false;
+		try
+		{
+			Request request = JsonConvert.DeserializeObject<Request>(Encoding.UTF8.GetString(result.Data)) ?? new();
+			Response response;
 
-		Request request = JsonConvert.DeserializeObject<Request>( Encoding.UTF8.GetString( result.Data ) ) ?? new();
-		Response response;
-
-		return Program.Module["auth"].Function["login"]( request, out response );
+			return Program.Module["auth"].Function["login"](request, out response);
+		} 
+		catch (Exception e)
+		{
+			Console.WriteLine($"Failed to parse or call request: {e.Message}");
+			return false;
+		}
 	}
 
 	internal Guid ID { get; private set; }

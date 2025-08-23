@@ -109,7 +109,7 @@ internal class ModuleAuth : Module {
 		}
 
 		string user_abr = reqdata.User;
-		string stmt = $"SELECT * FROM std_user WHERE abbreviation = {user_abr}";
+		string stmt = $"SELECT * FROM std_user WHERE abbreviation = '{user_abr}'";
 		DataTable user = Program.Database.Select( stmt );
 
 		if ( user.Rows.Count == 0 ) {
@@ -160,7 +160,7 @@ internal class ModuleAuth : Module {
 		response = new() {
 			Module = Name,
 			Code = 0,
-			Data = new( reqdata )
+			Data = JObject.FromObject( respdata )
 		};
 
 		return true;

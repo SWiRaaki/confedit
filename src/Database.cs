@@ -4,36 +4,37 @@ using System.IO;
 using Microsoft.Data.Sqlite;
 
 class Database {
-        public Database() {
-			if ( !Directory.Exists( "db" ) )
-				Directory.CreateDirectory( "db" );
-            Connection = new SqliteConnection( "Data Source=db/std.db" );
-            Connection.Open();
-        }
+	public Database() {
+		if ( !Directory.Exists( "db" ) )
+			Directory.CreateDirectory( "db" );
+		Connection = new SqliteConnection( "Data Source=db/std.db" );
+		Connection.Open();
+	}
 
-        ~Database() {
-                Connection.Close();
-        }
+	~Database() {
+			Connection.Close();
+	}
 
-		public int Execute( string command ) {
-			var cmd = Connection.CreateCommand();
-			cmd.CommandText = command;
+	public int Execute( string command ) {
+		var cmd = Connection.CreateCommand();
+		cmd.CommandText = command;
 
-			return cmd.ExecuteNonQuery();
+		return cmd.ExecuteNonQuery();
+	}
+
+	public DataTable Select( string command ) {
+		DataTable result = new();
+
+		var cmd = Connection.CreateCommand();
+		cmd.CommandText = command;
+
+		Console.WriteLine($"run select: {command}");
+		using ( var res = cmd.ExecuteReader() ) {
+			result.Load( res );
 		}
 
-        public DataTable Select( string command ) {
-			DataTable result = new();
+		return result;
+	}
 
-			var cmd = Connection.CreateCommand();
-			cmd.CommandText = command;
-
-			using ( var res = cmd.ExecuteReader() ) {
-				result.Load( res );
-			}
-
-			return result;
-		}
-
-        public SqliteConnection Connection { get; private set; }
+	public SqliteConnection Connection { get; private set; }
 }

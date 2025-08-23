@@ -3,6 +3,7 @@ using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.WebSockets;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
@@ -35,7 +36,7 @@ internal static class Program {
 		using (StreamReader stream = new( File.Open( "confedit.json" , FileMode.Open, FileAccess.Read ) ) ) {
 			Config = JsonConvert.DeserializeObject<AppConfig>( stream.ReadToEnd() ) ?? new();
 		}
-		//await RunDatabaseUpgrade();
+		RunDatabaseUpgrade();
 
 		Console.WriteLine( "Starting up listener server..");
 		Listener.Prefixes.Add( $"http://{Config.Host}:{Config.Port}/" );
@@ -50,12 +51,16 @@ internal static class Program {
 				WebSocket webSocket = wsContext.WebSocket;
 
 				Client client = new Client( webSocket );
-				if ( await client.Handshake() ) {
-					Clients.TryAdd( client.ID, client );
-					Console.WriteLine( $"Client connected: {client.ID} (Total: {Clients.Count})" );
+				if (await client.Handshake()) {
+					Clients.TryAdd(client.ID, client);
+					Console.WriteLine($"Client connected: {client.ID} (Total: {Clients.Count})");
 
 					_ = client.Handle();
-				}
+				} else {
+					var buf = Encoding.UTF8.GetBytes("Authentification failed");
+					await webSocket.SendAsync(new ArraySegment<byte>(buf), WebSocketMessageType.Text, true, CancellationToken.None);
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                }
 			}
 			else
 			{
