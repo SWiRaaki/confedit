@@ -1,87 +1,54 @@
-
 using System.Net.WebSockets;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-public record Error( [property:JsonProperty("code")] long Code, [property:JsonProperty("msg")] string Message );
+internal record ReadResult( WebSocketMessageType Type, byte[] Data );
 
-public class Request {
-	[JsonProperty("module")]
-	public string Module { get; set; }
-
-	[JsonProperty("function")]
-	public string Function { get; set; }
-
-	[JsonProperty("data")]
-	public object Data { get; set; }
-}
-
-public class Response {
-	[JsonProperty("module")]
-	public string Module { get; set; }
-
-	[JsonProperty("code")]
-	public long Code { get; set; }
-
-	[JsonProperty("data")]
-	public object? Data { get; set; }
-
-	[JsonProperty("errors")]
-	public List<Error> Errors { get; set; } = new();
-}
-
-public class Client {
-	public Client( Guid id, WebSocket socket ) {
-		ID = id;
+internal class Client {
+	internal Client( WebSocket socket ) {
 		mySocket = socket;
 	}
 
-	public async Task Handle() {
-		var buffer = new byte[4096]; // 4KB buffer
-		var offset = 0;
-		var free = buffer.Length;
-
+	internal async Task Handle() {
         try
         {
-            while (mySocket.State == WebSocketState.Open)
+            while ( mySocket.State == WebSocketState.Open )
             {
-				WebSocketReceiveResult result = await mySocket.ReceiveAsync( new ArraySegment<byte>( buffer, offset, free ), CancellationToken.None );
-				offset += result.Count;
-				free -= result.Count;
-				while( !result.EndOfMessage ) {
-					if ( free == 0 ) {
-						var newSize = buffer.Length + 4096;
-						var newBuffer = new byte[newSize];
-						Array.Copy( buffer, 0, newBuffer, 0, offset );
-						buffer = newBuffer;
-						free = buffer.Length + offset;
-					}
-					result = await mySocket.ReceiveAsync( new ArraySegment<byte>( buffer, offset, free ), CancellationToken.None );
-				}
-                if ( result.MessageType == WebSocketMessageType.Text )
+				ReadResult result = await ReadMessage();
+                if ( result.Type == WebSocketMessageType.Text )
                 {
-                    string message = Encoding.UTF8.GetString( buffer, 0, offset );
-                    Console.WriteLine( $"[{ID}]: Received '{message}'" );
-					var request = JsonConvert.DeserializeObject<Request>( message );
-					var response = new Response();
-					if ( request == null ) {
-						Console.WriteLine( "Failed to convert request" );
-					}
+					string text = Encoding.UTF8.GetString( result.Data );
+                    Console.WriteLine( $"[{ID}]: Received '{text}'" );
+					Request request = JsonConvert.DeserializeObject<Request>( text ) ?? new();
+					Response response;
 					HandleRequest( request, out response );
-					message = JsonConvert.SerializeObject( response );
-                    byte[] responseBytes = Encoding.UTF8.GetBytes( message );
+
+					text = JsonConvert.SerializeObject( response );
+                    byte[] responseBytes = Encoding.UTF8.GetBytes( text );
                     await mySocket.SendAsync( new ArraySegment<byte>( responseBytes ), WebSocketMessageType.Text, true, CancellationToken.None );
-					Console.WriteLine( $"[{ID}]: Responded: '{message}'" );
+					Console.WriteLine( $"[{ID}]: Responded: '{text}'" );
                 }
-                else if (result.MessageType == WebSocketMessageType.Close)
+				else if ( result.Type == WebSocketMessageType.Binary ) {
+					Console.WriteLine( $"[{ID}]: Received {result.Data.Length} bytes as binary. Unsupported, ignored!" );
+					var response = new Response() {
+						Module = "ce",
+						Code = -1,
+						Errors = {
+							new Error(-1, "Binary requests are not supported!" )
+						}
+					};
+
+					string text = JsonConvert.SerializeObject( response );
+					byte[] responseBytes = Encoding.UTF8.GetBytes( text );
+					await mySocket.SendAsync( new ArraySegment<byte>( responseBytes ), WebSocketMessageType.Text, true, CancellationToken.None );
+					Console.WriteLine( $"[{ID}]: Responded: '{text}'" );
+				}
+                else if ( result.Type == WebSocketMessageType.Close )
                 {
                     Console.WriteLine($"Client {ID} disconnected.");
                     break;
                 }
-				Array.Clear( buffer );
-				offset = 0;
-				free = buffer.Length;
             }
         }
         catch (Exception ex)
@@ -100,14 +67,49 @@ public class Client {
 		response = new Response() {
 			Module = request.Module,
 			Code = -1,
-			Data = null,
 			Errors = {
-				new Error(-1, $"{request.Module}.{request.Function} is not a function ( May be WIP )" )
+				new Error(-2, $"{request.Module}.{request.Function} is not a function ( May be WIP )" )
 			}
 		};
 	}
 
-	public Guid ID { get; private set; }
+	internal async Task<ReadResult> ReadMessage() {
+		var binary = new byte[4096]; // 4KB buffer
+		var offset = 0;
+		var free = binary.Length;
+		
+		WebSocketReceiveResult result = await mySocket.ReceiveAsync( new ArraySegment<byte>( binary, offset, free ), CancellationToken.None );
+		offset += result.Count;
+		free -= result.Count;
+		if (result.MessageType == WebSocketMessageType.Close)
+		{
+			return new ReadResult( WebSocketMessageType.Close, binary );
+		}
+		while( !result.EndOfMessage ) {
+			if ( free == 0 ) {
+				var newSize = binary.Length + 4096;
+				var newBuffer = new byte[newSize];
+				Array.Copy( binary, 0, newBuffer, 0, offset );
+				binary = newBuffer;
+				free = binary.Length - offset;
+			}
+			result = await mySocket.ReceiveAsync( new ArraySegment<byte>( binary, offset, free ), CancellationToken.None );
+		}
+		return new ReadResult( result.MessageType, binary );
+	}
+
+	internal async Task<bool> Handshake() {
+		ReadResult result = await ReadMessage();
+		if ( result.Type != WebSocketMessageType.Text )
+			return false;
+
+		Request request = JsonConvert.DeserializeObject<Request>( Encoding.UTF8.GetString( result.Data ) ) ?? new();
+		Response response;
+
+		return Program.Module["auth"].Function["login"]( request, out response );
+	}
+
+	internal Guid ID { get; private set; }
 	
 	private WebSocket mySocket;
 }
