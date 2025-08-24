@@ -30,7 +30,7 @@ internal class Response {
 	internal List<Error> Errors { get; set; } = new();
 }
 
-internal delegate bool ModuleProcess( Request request, out Response response );
+internal delegate bool ModuleProcess( object caller, Request request, out Response response );
 
 internal abstract class Module {
 	internal abstract string Name { get; }

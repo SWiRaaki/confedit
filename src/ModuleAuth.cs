@@ -82,7 +82,7 @@ internal class ModuleAuth : Module {
 
 	internal override string Name { get; } = "auth";
 
-	internal bool Login( Request request, out Response response ) {
+	internal bool Login( object caller, Request request, out Response response ) {
 		if ( request.Module != Name || request.Function != "login" ) {
 			response = new Response() {
 				Module = Name,
@@ -153,6 +153,11 @@ internal class ModuleAuth : Module {
 			},
 			Secret = Program.Config.Secret
 		};
+
+		if ( caller is Client ) {
+			Client client = caller as Client;
+			client.ID = new( row["uuid"].ToString() ?? "" );
+		}
 
 		respdata = new();
 		respdata.Auth = token.ToString();

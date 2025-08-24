@@ -47,31 +47,45 @@ internal class Client {
 				}
                 else if ( result.Type == WebSocketMessageType.Close )
                 {
-                    Console.WriteLine($"Client {ID} disconnected.");
+                    Console.WriteLine( $"Client {ID} disconnected." );
                     break;
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error with client {ID}: {ex.Message}");
+            Console.WriteLine( $"Error with client {ID}: {ex.Message}" );
         }
         finally
         {
-            Program.Clients.TryRemove(ID, out _);
-            await mySocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-            Console.WriteLine($"Client {ID} removed. Active clients: {Program.Clients.Count}");
+            Program.Clients.TryRemove( ID, out _ );
+            await mySocket.CloseAsync( WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None );
+            Console.WriteLine( $"Client {ID} removed. Active clients: {Program.Clients.Count}" );
         }
 	}
 
 	void HandleRequest( Request request, out Response response ) {
-		response = new Response() {
-			Module = request.Module,
-			Code = -1,
-			Errors = {
-				new Error(-2, $"{request.Module}.{request.Function} is not a function ( May be WIP )" )
-			}
-		};
+		Module? module;
+		ModuleProcess? function;
+		if ( !Program.Module.TryGetValue( request.Module, out module ) ) {
+			response = new Response() {
+				Module = "ce",
+				Code = -1,
+				Errors = {
+					new Error( -2, $"{request.Module} is not a module ( May be WIP )" )
+				}
+			};
+		} else if ( !module.Function.TryGetValue( request.Function, out function ) ) {
+			response = new Response() {
+				Module = "ce",
+				Code = -1,
+				Errors = {
+					new Error( -2, $"{request.Module}.{request.Function} is not a function ( May be WIP )" )
+				}
+			};
+		} else {
+			function( this, request, out response );
+		}
 	}
 
 	internal async Task<ReadResult> ReadMessage() {
@@ -105,19 +119,19 @@ internal class Client {
 			return false;
 		try
 		{
-			Request request = JsonConvert.DeserializeObject<Request>(Encoding.UTF8.GetString(result.Data)) ?? new();
+			Request request = JsonConvert.DeserializeObject<Request>( Encoding.UTF8.GetString( result.Data ) ) ?? new();
 			Response response;
 
-			return Program.Module["auth"].Function["login"](request, out response);
-		} 
-		catch (Exception e)
+			return Program.Module["auth"].Function["login"]( this, request, out response );
+		}
+		catch ( Exception e )
 		{
-			Console.WriteLine($"Failed to parse or call request: {e.Message}");
+			Console.WriteLine( $"Failed to parse or call request: {e.Message}" );
 			return false;
 		}
 	}
 
-	internal Guid ID { get; private set; }
+	internal Guid ID { get; set; }
 	
 	private WebSocket mySocket;
 }
