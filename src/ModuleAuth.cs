@@ -74,11 +74,18 @@ internal class AuthLoginResponseData {
 	internal string Auth { get; set; } = "";
 }
 
+internal class AuthRegisterUserRequestData {
+}
+
+internal class AuthRegisterUserResponseData {
+
+}
+
 internal class ModuleAuth : Module {
 	internal ModuleAuth() {
 		Function = new();
 		Function.Add( "login", Login );
-	}
+}
 
 	internal override string Name { get; } = "auth";
 
@@ -168,6 +175,10 @@ internal class ModuleAuth : Module {
 			Data = JObject.FromObject( respdata )
 		};
 
+		return true;
+	}
+
+	internal bool RegisterUser( object caller, Request request, Response response ) {
 		return true;
 	}
 }

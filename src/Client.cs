@@ -113,6 +113,11 @@ internal class Client {
 		return new ReadResult( result.MessageType, binary );
 	}
 
+	internal async Task WriteMessage( string message ) {
+		var binary = Encoding.UTF8.GetBytes( message );
+		await mySocket.SendAsync( new ArraySegment<byte>( binary ), WebSocketMessageType.Text, true, CancellationToken.None );
+	}
+
 	internal async Task<bool> Handshake() {
 		ReadResult result = await ReadMessage();
 		if ( result.Type != WebSocketMessageType.Text )
@@ -122,7 +127,9 @@ internal class Client {
 			Request request = JsonConvert.DeserializeObject<Request>( Encoding.UTF8.GetString( result.Data ) ) ?? new();
 			Response response;
 
-			return Program.Module["auth"].Function["login"]( this, request, out response );
+			bool ret = Program.Module["auth"].Function["login"]( this, request, out response );
+			await WriteMessage( JsonConvert.SerializeObject( response ) );
+			return ret;
 		}
 		catch ( Exception e )
 		{

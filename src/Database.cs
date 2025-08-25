@@ -28,7 +28,6 @@ class Database {
 		var cmd = Connection.CreateCommand();
 		cmd.CommandText = command;
 
-		Console.WriteLine($"run select: {command}");
 		using ( var res = cmd.ExecuteReader() ) {
 			result.Load( res );
 		}
