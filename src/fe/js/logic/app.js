@@ -25,9 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
         compareBtn.addEventListener("click", () => {
             const selected = document.querySelector("input[name='version-select']:checked");
             if (selected) {
-                alert("Vergleich gestartet für Version: " + selected.value);
+                alert("Vergleich gestartet fuer Version: " + selected.value);
             } else {
-                alert("Bitte zuerst eine Version auswählen!");
+                alert("Bitte zuerst eine Version auswaehlen!");
             }
         });
     }
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (selected) {
                 alert("Version " + selected.value + " wird wiederhergestellt!");
             } else {
-                alert("Bitte zuerst eine Version auswählen!");
+                alert("Bitte zuerst eine Version auswaehlen!");
             }
         });
     }
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (e.target.classList.contains("delete-user")) {
                 const row = e.target.closest("tr");
-                if (confirm("Benutzer wirklich löschen?")) {
+                if (confirm("Benutzer wirklich loeschen?")) {
                     row.remove();
                 }
             }
