@@ -1,0 +1,36 @@
+# Script Header defining the version of the patch
+[META]
+# Major.Minor.Patch SEMVER version without prefix and build
+MAJOR  = 1
+MINOR  = 0
+PATCH  = 0
+# Script version, descriptive unique name declaring the engine to use
+SCRIPT = "ScriptQLite"
+
+[SCRIPTS]
+DIR    = "sql/"
+NEW    = [
+	"std_dbver.sql",
+	"std_user.sql",
+	"std_group.sql",
+	"std_user_gr.sql",
+	"std_acces.sql",
+	"std_rule.sql",
+	"std_scope.sql",
+	"std_auth.sql"
+]
+ALTER  = [
+
+]
+INSERT = [
+	"std_user.1.0.0.sql",
+	"std_group.1.0.0.sql",
+	"std_user_gr.1.0.0.sql",
+	"std_acces.1.0.0.sql",
+	"std_rule.1.0.0.sql",
+	"std_scope.1.0.0.sql",
+	"std_auth.1.0.0.sql"
+]
+REMOVE = [
+
+]

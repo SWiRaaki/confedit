@@ -5,6 +5,8 @@ create table if not exists std_rule (
 	name			text	not null,
 	namespace		text	not null,
 
+	check( length( uuid ) = 32 and uuid GLOB '[0-9a-f]*' ),
+
 	-- The combination of name and namespace creates a unique key
 	unique( name, namespace )
 );
