@@ -1,8 +1,5 @@
-//TODO error handle
-
-// ERR.JS muss gar nichts validieren, sondern NUR zeige Fehler dem User
-// ICH BEKOMME FEHLER VON SERVER, DIE MUSS ZEIGEN
 function setError(el, message) {
+    if (!el) return;
     let hint = el.parentNode.querySelector(".hint");
     if (!hint) {
         hint = document.createElement("div");
@@ -14,6 +11,7 @@ function setError(el, message) {
 }
 
 function clearError(el) {
+    if (!el) return;
     const hint = el.parentNode.querySelector(".hint");
     if (hint) {
         hint.textContent = "";
@@ -48,4 +46,11 @@ function handleServerErrors(errors) {
             }
         }
     }
+}
+
+function clearAllErrors(form) {
+    if (form) {
+        form.querySelectorAll(".hint").forEach(h => h.remove());
+    }
+    setGlobalError("");
 }

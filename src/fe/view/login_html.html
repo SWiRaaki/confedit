@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="src/fe/css/style.css">
+    <script src="login.js" defer></script>
+</head>
+<body>
+<header>
+    <nav>
+        <ul>
+            <li><a href="#" class="active">Login</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <h1>Login</h1>
+
+    <section>
+        <form id="loginForm">
+            <label for="user">Benutzer (Abkürzung)</label>
+            <input type="text" id="user" name="user" placeholder="z.B. jd" required>
+
+            <label for="security">Passwort</label>
+            <input type="password" id="security" name="security" required>
+
+            <button type="submit">Einloggen</button>
+        </form>
+
+        <p id="loginHint" class="hint"></p>
+    </section>
+</main>
+</body>
+</html>

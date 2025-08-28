@@ -1,88 +1,108 @@
-function detectType(value) {
-    if (value === "true" || value === "false") return "bool";
-    if (!isNaN(value) && value.toString().indexOf('.') === -1) return "integer";
-    if (!isNaN(value) && value.toString().indexOf('.') !== -1) return "float";
-    if (/\d{4}-\d{2}-\d{2}/.test(value)) return "datetime";
-    if (Array.isArray(value)) return "list";
-    return "string";
-}
+const dataSender = (() => {
+    let ws = null;
+    let onLog = null;
 
-function createItem(name, value, type = "string", children = [], meta = {}) {
-    return {
-        name: String(name),
-        value: String(value),
-        type: type,
-        children: children,
-        meta: meta
-    };
-}
-
-function buildConfigRequest(configName, uid, items, moduleName, functionName) {
-    return {
-        module: moduleName,
-        function: functionName,
-        data: {
-            config: configName,
-            uid: uid,
-            Items: items
-        }
-    };
-}
-
-function sendConfig(ws, request) {
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(request));
-        console.log("Request gesendet:", request);
-    } else {
-        console.error("Sender-WS nicht verbunden. Request nicht gesendet:", request);
-        alert("Senden fehlgeschlagen: Keine Verbindung zum Backend-WebSocket.");
-    }
-}
-
-function buildTreeFromForm(form, meta = {}) {
-    const items = [];
-    const formData = new FormData(form);
-
-    for (const [key, value] of formData.entries()) {
-        const type = detectType(value);
-        items.push(createItem(key, value, type, [], meta));
+    function log(msg) {
+        console.log(msg);
+        if (onLog) onLog(msg);
     }
 
-    return items;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector("#configForm");
-    if (!form) return;
-
-    const ws = new WebSocket("ws://localhost:8080");
-
-    ws.onopen = () => console.log("WebSocket verbunden");
-    ws.onerror = (err) => console.error("WebSocket Fehler:", err);
-    ws.onmessage = (msg) => {
-        try {
-            const data = JSON.parse(msg.data);
-            console.log("Antwort vom Server (JSON):", data);
-        } catch {
-            console.log("Antwort vom Server (Text):", msg.data);
+    function connectWS(url = "ws://localhost:8080") {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            log("WebSocket ist bereits verbunden.");
+            return;
         }
+
+        ws = new WebSocket(url);
+
+        ws.onopen = () => log("WebSocket verbunden.");
+        ws.onerror = (err) => log("WebSocket Fehler: " + err);
+        ws.onclose = () => log("WebSocket geschlossen.");
+        ws.onmessage = (msg) => {
+            try {
+                const data = JSON.parse(msg.data);
+                log("Server-Antwort (JSON): " + JSON.stringify(data));
+                if (data.errors) handleServerErrors(data.errors);
+            } catch {
+                log("Server-Antwort (Text): " + msg.data);
+            }
+        };
+    }
+
+    function disconnectWS() {
+        if (!ws) return;
+        ws.close();
+        ws = null;
+    }
+
+    function sendRaw(message) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            log("WebSocket nicht verbunden. Nachricht nicht gesendet.");
+            alert("Keine Verbindung zum Server.");
+            return;
+        }
+
+        let payload = message;
+        if (typeof message !== "string") {
+            payload = JSON.stringify(message);
+        }
+
+        ws.send(payload);
+        log("Gesendet: " + payload);
+    }
+
+    async function sendForm(form) {
+        if (!form) throw new Error("Kein Formular angegeben.");
+
+        const formData = new FormData(form);
+        const items = [];
+
+        for (const [key, value] of formData.entries()) {
+            let type = detectType(value);
+            let parsedValue = value;
+
+            if (type === "bool") parsedValue = value === "true";
+            else if (type === "integer") parsedValue = parseInt(value, 10);
+            else if (type === "float") parsedValue = parseFloat(value);
+
+            items.push({
+                name: key,
+                value: parsedValue,
+                type: type,
+                children: [],
+                meta: {}
+            });
+        }
+
+        const request = {
+            module: form.dataset.module || "defaultModule",
+            function: form.dataset.function || "defaultFunction",
+            data: {
+                config: form.dataset.config || "myConfig",
+                uid: crypto.randomUUID(),
+                Items: items
+            }
+        };
+
+        sendRaw(request);
+
+        return new Promise((resolve) => {
+            resolve({ ok: true });
+        });
+    }
+
+    function sendAction(actionName) {
+        if (!actionName) return;
+        sendRaw({ action: actionName });
+        log("Aktion gesendet: " + actionName);
+    }
+
+    return {
+        connectWS,
+        disconnectWS,
+        sendRaw,
+        sendForm,
+        sendAction,
+        set onLog(fn) { onLog = fn; },
     };
-
-    form.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const items = buildTreeFromForm(form);
-        const moduleName = form.dataset.module || "defaultModule";
-        const functionName = form.dataset.function || "defaultFunction";
-
-        const request = buildConfigRequest(
-            form.dataset.config || "myConfig",
-            crypto.randomUUID(),
-            items,
-            moduleName,
-            functionName
-        );
-
-        sendConfig(ws, request);
-    });
-});
+})();
