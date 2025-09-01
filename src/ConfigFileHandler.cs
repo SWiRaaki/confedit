@@ -9,11 +9,44 @@ using IniParser.Model;
 using System.Xml.Linq;
 using Tomlyn;               
 using Tomlyn.Model;
+using Newtonsoft.Json.Linq;
+using SQLitePCL;
 
 public class ParsedConfig
 {
-    public string Format { get; set; }  
-    public object Data { get; set; }    
+    public string Format { get; set; }
+    public object Data { get; set; }
+}
+
+public class Data
+{
+    [JsonProperty("config")]
+    public string Config { get; set; }
+
+    [JsonProperty("uid")]
+    public string Uid { get; set; }
+
+    [JsonProperty("items")]
+    public List<Item> Items { get; set; }
+}
+
+public class Item
+{
+    [JsonProperty("name")]
+    public string Name { get; set; }
+
+    [JsonProperty("value")]
+    public string Value { get; set; }
+
+    [JsonProperty("type")]
+
+    public string Type { get; set; }
+
+    [JsonProperty("children")]
+    public List<Item> Children { get; set; }
+
+    [JsonProperty("meta")]
+    public Dictionary<string, object> Meta { get; set; }
 }
 
 public static class ConfigFileHandler
