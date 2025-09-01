@@ -7,7 +7,7 @@ insert or ignore into std_auth (
 	rule_serial
 )
 values(
-	[GUID],
+	'[GUID]',
 	( select uuid from std_group where abbreviation = 'admin' ),
 	0xFFFFFFFF,
 	( select scope_serial from std_scope where name = 'any' and namespace = 'global' ),

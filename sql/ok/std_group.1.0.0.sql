@@ -6,7 +6,7 @@ insert or ignore into std_group (
 	description
 )
 values(
-	[GUID],
+	'[GUID]',
 	'admin',
 	'admin',
 	'Admin user group with global access rights'

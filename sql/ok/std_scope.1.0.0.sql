@@ -5,7 +5,7 @@ insert or ignore into std_scope (
 	namespace
 )
 values (
-	[GUID],
+	'[GUID]',
 	'any',
 	'global'
 );

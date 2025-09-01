@@ -5,7 +5,7 @@ insert or ignore into std_rule (
 	namespace
 )
 values (
-	[GUID],
+	'[GUID]',
 	'allowed',
 	'global'
 );
@@ -16,7 +16,7 @@ insert or ignore into std_rule (
 	namespace
 )
 values (
-	[GUID],
+	'[GUID]',
 	'denied',
 	'global'
 );

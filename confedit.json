@@ -1,5 +1,5 @@
 {
 	"host": "+",
 	"port": 8080,
-	"secret": "4JxrrIKpcvwIXOMGJZF9A3bFN4rWC8cFledh6fsgmLeK58q3f00GXI6tKCTaEWF9"
+	"jwts": "4JxrrIKpcvwIXOMGJZF9A3bFN4rWC8cFledh6fsgmLeK58q3f00GXI6tKCTaEWF9"
 }

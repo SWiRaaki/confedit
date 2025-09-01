@@ -5,7 +5,7 @@ insert or ignore into std_acces (
 	description
 )
 values(
-	[GUID],
+	'[GUID]',
 	0x00000001,
 	'Read'
 );
@@ -16,7 +16,7 @@ insert or ignore into std_acces (
 	description
 )
 values(
-	[GUID],
+	'[GUID]',
 	0x00000002,
 	'Write'
 );
@@ -27,7 +27,7 @@ insert or ignore into std_acces (
 	description
 )
 values(
-	[GUID],
+	'[GUID]',
 	0x00000004,
 	'Delete'
 );
@@ -38,7 +38,7 @@ insert or ignore into std_acces (
 	description
 )
 values(
-	[GUID],
+	'[GUID]',
 	0x00000008,
 	'Create'
 );

@@ -12,12 +12,24 @@ class Database {
 	}
 
 	~Database() {
-			Connection.Close();
+		Connection.Close();
+	}
+
+	public SqliteTransaction BeginTransaction() {
+		return Connection.BeginTransaction();
 	}
 
 	public int Execute( string command ) {
 		var cmd = Connection.CreateCommand();
 		cmd.CommandText = command;
+
+		return cmd.ExecuteNonQuery();
+	}
+
+	public int Execute( string command, SqliteTransaction transaction ) {
+		var cmd = Connection.CreateCommand();
+		cmd.CommandText = command;
+		cmd.Transaction = transaction;
 
 		return cmd.ExecuteNonQuery();
 	}

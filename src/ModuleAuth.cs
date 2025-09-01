@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Data;
 using System.Security.Cryptography;
@@ -46,18 +47,48 @@ internal class Jwt {
 	internal string Secret { get; set; } = "";
 
 	internal static string ToBase64( string text ) {
-		return Convert.ToBase64String( Encoding.UTF8.GetBytes( text ) );
+		return Base64Url.EncodeToString( Encoding.UTF8.GetBytes( text ) );
 	}
 
+	internal static string FromBase64( string text ) {
+		var b64 = Encoding.UTF8.GetBytes( text );
+		return Encoding.UTF8.GetString( Base64Url.DecodeFromUtf8( b64 ) );
+	}
+
+	internal static string ComputeSignatureSegment( string headerb64, string payloadb64 )
+    {
+        var key = Encoding.UTF8.GetBytes( Program.Config.Secret );
+        var data = Encoding.ASCII.GetBytes( $"{headerb64}.{payloadb64}" );
+        using var hmac = new HMACSHA256( key );
+        var sig = hmac.ComputeHash( data );
+        return Base64Url.EncodeToString( sig );
+    }
+
 	public override string ToString() {
-		HMACSHA256 sha256 = new( Encoding.UTF8.GetBytes( Secret ) );
-		string headerjson = JsonConvert.SerializeObject( Header );
-		string payloadjson = JsonConvert.SerializeObject( Payload );
-		string headerb64 = ToBase64( headerjson );
-		string payloadb64 = ToBase64( payloadjson );
-		string secret = $"{headerb64}.{payloadb64}";
-		string secretb64 = Convert.ToBase64String( sha256.ComputeHash( Encoding.UTF8.GetBytes( secret ) ) );
+		var headerjson = JsonConvert.SerializeObject( Header );
+		var payloadjson = JsonConvert.SerializeObject( Payload );
+		var headerb64 = ToBase64( headerjson );
+		var payloadb64 = ToBase64( payloadjson );
+		var secretb64 = ComputeSignatureSegment( headerb64, payloadb64 );
+		Console.WriteLine( $"{headerb64}.{payloadb64}.{secretb64}; Secret: {Program.Config.Secret}" );
 		return $"{headerb64}.{payloadb64}.{secretb64}";
+	}
+
+	internal static Jwt FromString( string token ) {
+		string [] segments = token.Split( "." );
+		var jwt = new Jwt();
+		var headertext = FromBase64( segments[0] );
+		var payloadtext = FromBase64( segments[1] );
+		var secretb64 = ComputeSignatureSegment( segments[0], segments[1] );
+
+		if ( secretb64 != segments[2] ) {
+			return jwt;
+		}
+
+		jwt.Header = JsonConvert.DeserializeObject<HeaderType>( headertext );
+		jwt.Payload = JsonConvert.DeserializeObject<PayloadType>( payloadtext );
+		jwt.Secret = Program.Config.Secret;
+		return jwt;
 	}
 }
 
@@ -82,10 +113,9 @@ internal class AuthRegisterUserResponseData {
 }
 
 internal class ModuleAuth : Module {
-	internal ModuleAuth() {
-		Function = new();
+	internal ModuleAuth() : base() {
 		Function.Add( "login", Login );
-}
+	}
 
 	internal override string Name { get; } = "auth";
 
@@ -101,7 +131,7 @@ internal class ModuleAuth : Module {
 			return false;
 		}
 
-		AuthLoginRequestData? reqdata = request.Data.ToObject<AuthLoginRequestData>();
+		AuthLoginRequestData reqdata = request.Data.ToObject<AuthLoginRequestData>()!;
 		AuthLoginResponseData respdata;
 
 		if ( reqdata == null ) {
@@ -109,7 +139,7 @@ internal class ModuleAuth : Module {
 				Module = Name,
 				Code = -2,
 				Errors = {
-					new Error( -4, $"Failed authentification: User not found!" )
+					new Error( -4, $"Failed authentification: Invalid request data provided!" )
 				}
 			};
 			return false;
@@ -137,7 +167,7 @@ internal class ModuleAuth : Module {
 				Module = Name,
 				Code = -3,
 				Errors = {
-					new Error( -6, $"Failed authentification: User not found!" )
+					new Error( -6, $"Failed authentification: invalid security!" )
 				}
 			};
 			return false;

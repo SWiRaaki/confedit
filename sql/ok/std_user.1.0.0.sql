@@ -6,7 +6,7 @@ insert or ignore into std_user (
 	security
 )
 values (
-	[GUID],
+	'[GUID]',
 	'root',
 	'root',
 	''
@@ -19,7 +19,7 @@ insert or ignore into std_user (
 	security
 )
 values (
-	[GUID],
+	'[GUID]',
 	'sysadmin',
 	'sysadmin',
 	''
