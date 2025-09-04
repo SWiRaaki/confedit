@@ -1,0 +1,2 @@
+﻿auth_serial;auth_uuid;granted_via;accessee_name;accessee;scope_serial;scope;rule_serial;rule;access;permissions
+1;99eaf1a49f864d0ca049a2bcca36896d;group;admin;1c7e7b69b6934ee19bb96d06bf826c4c;1;global:any;1;global:allowed;4294967295;"Create, Delete, Read, Write"

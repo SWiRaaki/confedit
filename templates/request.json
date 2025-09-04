@@ -1,5 +1,5 @@
 {
-	"module": "string",
+	"module": "verifier",
 	"function": "string",
 	"data": {}
 }

@@ -4,5 +4,7 @@ create table if not exists std_user (
 	uuid			text	not null	unique,
 	name			text	not null,
 	abbreviation	text	not null	unique,
-	security		text	not null
+	security		text	not null,
+
+	check( length( uuid ) = 32 and uuid GLOB '[0-9a-f]*' )
 );
