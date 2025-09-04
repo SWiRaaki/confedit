@@ -4,6 +4,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Xml.Linq;
+using YamlDotNet.RepresentationModel;
+using YamlDotNet.Serialization;
 
 namespace ConfigTreeTest
 {
@@ -12,30 +15,55 @@ namespace ConfigTreeTest
         static void Main()
         {
             string inputFile = @"C:\Users\lmalagon10635\OneDrive - COSMO CONSULT AG\Desktop\confedit\input.json";
-            if (!File.Exists(inputFile))
-            {
-                Console.WriteLine($"File not found: {inputFile}");
-                return;
-            }
-
-            string json = File.ReadAllText(inputFile);
+            string xmlFile = @"C:\Users\lmalagon10635\OneDrive - COSMO CONSULT AG\Desktop\confedit\input.xml";
+            string yamlFile = @"C:\Users\lmalagon10635\OneDrive - COSMO CONSULT AG\Desktop\confedit\input.yaml";
 
             var options = new ConfigTreeConverter.Options
             {
-                UseLowercaseItems = true
+                UseLowercaseItems = true,
+                LiftPercentKeysToMeta = true
             };
 
-            // Convert Input → Tree
-            string treeJson = ConfigTreeConverter.ConvertJsonToTree(json, options);
-            string outputFile = "output.json";
-            File.WriteAllText(outputFile, treeJson);
-            Console.WriteLine($"Conversion done! See {outputFile}");
+            // JSON
+            if (File.Exists(inputJsonFile))
+            {
+                var json = File.ReadAllText(inputJsonFile);
+                var treeJson = ConfigTreeConverter.ConvertJsonToTree(json, options);
+                File.WriteAllText("output.json", treeJson);
+                Console.WriteLine("JSON → Tree done (output.json)");
 
-            // Convert Tree → Original
-            string restoredJson = ConfigTreeConverter.ConvertTreeToJson(treeJson, options);
-            string restoredFile = "restored.json";
-            File.WriteAllText(restoredFile, restoredJson);
-            Console.WriteLine($"Restoration done! See {restoredFile}");
+                var restoredJson = ConfigTreeConverter.ConvertTreeToJson(treeJson, options);
+                File.WriteAllText("restored.json", restoredJson);
+                Console.WriteLine("Tree → JSON restored (restored.json)");
+            }
+
+            // XML
+            if (File.Exists(inputXmlFile))
+            {
+                var xml = File.ReadAllText(inputXmlFile);
+                var treeJson = ConfigTreeConverter.ConvertXmlToTree(xml, options);
+                File.WriteAllText("output_from_xml.json", treeJson);
+                Console.WriteLine("XML → Tree done (output_from_xml.json)");
+
+                var restoredXml = ConfigTreeConverter.ConvertTreeToXml(treeJson, options);
+                File.WriteAllText("restored.xml", restoredXml);
+                Console.WriteLine("Tree → XML restored (restored.xml)");
+            }
+
+            // YAML
+            if (File.Exists(inputYamlFile))
+            {
+                var yaml = File.ReadAllText(inputYamlFile);
+                var treeJson = ConfigTreeConverter.ConvertYamlToTree(yaml, options);
+                File.WriteAllText("output_from_yaml.json", treeJson);
+                Console.WriteLine("YAML → Tree done (output_from_yaml.json)");
+
+                var restoredYaml = ConfigTreeConverter.ConvertTreeToYaml(treeJson, options);
+                File.WriteAllText("restored.yaml", restoredYaml);
+                Console.WriteLine("Tree → YAML restored (restored.yaml)");
+            }
+
+            Console.WriteLine("All done.");
         }
     }
 
@@ -64,7 +92,6 @@ namespace ConfigTreeTest
             public Dictionary<string, object> Meta { get; set; } = new();
         }
 
-        // FORWARD: Input → Tree
         public static string ConvertJsonToTree(string json, Options? options = null)
         {
             options ??= new Options();
@@ -154,7 +181,6 @@ namespace ConfigTreeTest
             return node;
         }
 
-        // BACKWARD: Tree → Input
         public static string ConvertTreeToJson(string treeJson, Options? options = null)
         {
             options ??= new Options();
@@ -178,12 +204,9 @@ namespace ConfigTreeTest
 
         private static object BuildElementFromItem(Item item)
         {
-            // Handle metadata keys (% back)
             var dict = new Dictionary<string, object>();
             foreach (var kv in item.Meta)
-            {
                 dict["%" + kv.Key] = kv.Value;
-            }
 
             switch (item.Type)
             {
@@ -212,6 +235,286 @@ namespace ConfigTreeTest
 
                 case "null":
                     return null!;
+
+                default:
+                    return item.Value;
+            }
+        }
+
+        public static string ConvertXmlToTree(string xml, Options? options = null)
+        {
+            options ??= new Options();
+            var doc = XDocument.Parse(xml);
+
+            var rootElement = doc.Root ?? throw new ArgumentException("XML has no root");
+            var root = new Root { Config = rootElement.Name.LocalName, Uid = Guid.NewGuid().ToString() };
+
+            var rootItem = CreateNodeFromXElement(rootElement, options);
+
+            var rootItems = new List<Item> { rootItem };
+            if (options.UseLowercaseItems)
+                root.items = rootItems;
+            else
+                root.Items = rootItems;
+
+            return JsonSerializer.Serialize(root, new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        private static Item CreateNodeFromXElement(XElement el, Options options)
+        {
+            var node = new Item { Name = el.Name.LocalName, Type = "category", Value = "" };
+
+            foreach (var attr in el.Attributes())
+                node.Meta[attr.Name.LocalName] = attr.Value;
+
+            foreach (var child in el.Elements())
+                node.Children.Add(CreateNodeFromXElement(child, options));
+
+            if (!el.HasElements && !string.IsNullOrWhiteSpace(el.Value))
+            {
+                node.Type = "string";
+                node.Value = el.Value;
+            }
+
+            return node;
+        }
+
+        public static string ConvertTreeToXml(string treeJson, Options? options = null)
+        {
+            options ??= new Options();
+
+            var root = JsonSerializer.Deserialize<Root>(treeJson);
+            if (root == null)
+                throw new ArgumentException("Invalid tree JSON");
+
+            var rootItems = root.Items ?? root.items;
+            if (rootItems == null || rootItems.Count == 0)
+                throw new ArgumentException("Tree JSON does not contain items");
+
+            var configItem = rootItems[0];
+            var xRoot = BuildXElementFromItem(configItem);
+
+            var doc = new XDocument(xRoot);
+            return doc.ToString();
+        }
+
+        private static XElement BuildXElementFromItem(Item item)
+        {
+            var el = new XElement(item.Name);
+
+            foreach (var kv in item.Meta)
+                el.SetAttributeValue(kv.Key, kv.Value);
+
+            foreach (var child in item.Children)
+                el.Add(BuildXElementFromItem(child));
+
+            if (item.Type != "category" && item.Type != "list" && item.Children.Count == 0)
+                el.Value = item.Value;
+
+            return el;
+        }
+
+        public static string ConvertYamlToTree(string yaml, Options? options = null)
+        {
+            options ??= new Options();
+
+            var yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(yaml));
+
+            if (yamlStream.Documents.Count == 0)
+                throw new ArgumentException("YAML has no documents");
+
+            var rootNode = yamlStream.Documents[0].RootNode;
+
+            string configName;
+            YamlNode configNode;
+            if (rootNode is YamlMappingNode topMap && topMap.Children.Count == 1)
+            {
+                var first = topMap.Children.First();
+                var keyNode = first.Key as YamlScalarNode;
+                if (keyNode != null)
+                {
+                    configName = keyNode.Value ?? "root";
+                    configNode = first.Value;
+                }
+                else
+                {
+                    configName = "root";
+                    configNode = rootNode;
+                }
+            }
+            else
+            {
+                configName = "root";
+                configNode = rootNode;
+            }
+
+            var root = new Root { Config = configName, Uid = Guid.NewGuid().ToString() };
+            var rootItem = CreateNodeFromYamlNode(configName, configNode, options);
+
+            var rootItems = new List<Item> { rootItem };
+            if (options.UseLowercaseItems)
+                root.items = rootItems;
+            else
+                root.Items = rootItems;
+
+            return JsonSerializer.Serialize(root, new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        private static Item CreateNodeFromYamlNode(string name, YamlNode node, Options options)
+        {
+            var item = new Item { Name = name };
+
+            switch (node)
+            {
+                case YamlMappingNode map:
+                    item.Type = "category";
+                    foreach (var kv in map.Children)
+                    {
+                        var key = kv.Key.ToString();
+                        var val = kv.Value;
+
+                        if (options.LiftPercentKeysToMeta && key.StartsWith("%"))
+                        {
+                            var metaKey = key.Substring(1);
+                            if (val is YamlScalarNode s)
+                                item.Meta[metaKey] = s.Value ?? "";
+                            else
+                                item.Meta[metaKey] = ConvertYamlNodeToObject(val);
+                        }
+                        else
+                        {
+                            item.Children.Add(CreateNodeFromYamlNode(key, val, options));
+                        }
+                    }
+                    break;
+
+                case YamlSequenceNode seq:
+                    item.Type = "list";
+                    int idx = 0;
+                    foreach (var child in seq.Children)
+                    {
+                        item.Children.Add(CreateNodeFromYamlNode(idx.ToString(), child, options));
+                        idx++;
+                    }
+                    break;
+
+                case YamlScalarNode scalar:
+                    var scalarVal = scalar.Value;
+                    var detected = DetectScalarType(scalarVal);
+                    item.Type = detected;
+                    if (detected == "float")
+                        item.Value = double.TryParse(scalarVal, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d.ToString(CultureInfo.InvariantCulture) : scalarVal ?? "";
+                    else if (detected == "integer")
+                        item.Value = long.TryParse(scalarVal, out var l) ? l.ToString() : scalarVal ?? "";
+                    else if (detected == "bool")
+                        item.Value = (scalarVal?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false).ToString().ToLower();
+                    else if (detected == "null")
+                        item.Value = "";
+                    else
+                        item.Value = scalarVal ?? "";
+                    break;
+            }
+
+            return item;
+        }
+
+        private static object? ConvertYamlNodeToObject(YamlNode node)
+        {
+            switch (node)
+            {
+                case YamlScalarNode s:
+                    if (s.Value == null) return null;
+                    if (long.TryParse(s.Value, out var l)) return l;
+                    if (double.TryParse(s.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d)) return d;
+                    if (s.Value.Equals("true", StringComparison.OrdinalIgnoreCase)) return true;
+                    if (s.Value.Equals("false", StringComparison.OrdinalIgnoreCase)) return false;
+                    if (s.Value.Equals("null", StringComparison.OrdinalIgnoreCase) || s.Value == "~") return null;
+                    return s.Value;
+
+                case YamlMappingNode m:
+                    var dict = new Dictionary<string, object?>();
+                    foreach (var kv in m.Children)
+                        dict[kv.Key.ToString()] = ConvertYamlNodeToObject(kv.Value);
+                    return dict;
+
+                case YamlSequenceNode seq:
+                    var list = new List<object?>();
+                    foreach (var child in seq.Children)
+                        list.Add(ConvertYamlNodeToObject(child));
+                    return list;
+
+                default:
+                    return null;
+            }
+        }
+
+        private static string DetectScalarType(string? value)
+        {
+            if (value == null) return "null";
+            if (value.Equals("null", StringComparison.OrdinalIgnoreCase) || value == "~") return "null";
+            if (long.TryParse(value, out _)) return "integer";
+            if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _)) return "float";
+            if (value.Equals("true", StringComparison.OrdinalIgnoreCase) || value.Equals("false", StringComparison.OrdinalIgnoreCase))
+                return "bool";
+            return "string";
+        }
+
+        public static string ConvertTreeToYaml(string treeJson, Options? options = null)
+        {
+            options ??= new Options();
+
+            var root = JsonSerializer.Deserialize<Root>(treeJson);
+            if (root == null)
+                throw new ArgumentException("Invalid tree JSON");
+
+            var rootItems = root.Items ?? root.items;
+            if (rootItems == null || rootItems.Count == 0)
+                throw new ArgumentException("Tree JSON does not contain items");
+
+            var configItem = rootItems[0];
+
+            var dict = new Dictionary<string, object?>
+            {
+                [root.Config] = BuildYamlElementFromItem(configItem)
+            };
+
+            var serializer = new SerializerBuilder().Build();
+            return serializer.Serialize(dict);
+        }
+
+        private static object? BuildYamlElementFromItem(Item item)
+        {
+            switch (item.Type)
+            {
+                case "category":
+                    var dict = new Dictionary<string, object?>();
+                    foreach (var kv in item.Meta)
+                        dict["%" + kv.Key] = kv.Value;
+                    foreach (var child in item.Children)
+                        dict[child.Name] = BuildYamlElementFromItem(child);
+                    return dict;
+
+                case "list":
+                    var list = new List<object?>();
+                    foreach (var child in item.Children.OrderBy(c => int.Parse(c.Name)))
+                        list.Add(BuildYamlElementFromItem(child));
+                    return list;
+
+                case "string":
+                    return item.Value;
+
+                case "integer":
+                    return long.TryParse(item.Value, out var l) ? l : 0;
+
+                case "float":
+                    return double.TryParse(item.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0.0;
+
+                case "bool":
+                    return item.Value == "true";
+
+                case "null":
+                    return null;
 
                 default:
                     return item.Value;
