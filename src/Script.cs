@@ -83,7 +83,7 @@ internal abstract class Script {
 
 		Script script = Program.Scripter[patch.Meta.Script];
 		if ( script == null ) {
-			Console.WriteLine( $"Script engine {script.Name} is not installed! Please update binaries to run patch!" );
+			Console.WriteLine( $"Script engine {patch.Meta.Script} is not installed! Please update binaries to run patch!" );
 			return false;
 		}
 
@@ -128,14 +128,14 @@ internal abstract class Script {
 			var result = Program.Database.Select( $"select * from std_dbver where major={patch.Meta.Major} and minor={patch.Meta.Minor} and patch={patch.Meta.Patch}" );
 			return result.Rows.Count == 1;
 		}
-		catch( Exception e ) {
+		catch {
 			return false;
 		}
 	}
 
 	internal static void MovePatchFiles( PatchData patch, string destination ) {
 		if ( File.Exists( patch.File ) ) {
-			File.Move( patch.File, $"{patch.Scripts.Directory}{destination}/{patch.File}" )
+			File.Move( patch.File, $"{patch.Scripts.Directory}{destination}/{patch.File}" );
 		}
 		for ( int i = 0; i < patch.Scripts.Create.Count; ++i ) {
 			var file = $"{patch.Scripts.Directory}{patch.Scripts.Create[i]}";

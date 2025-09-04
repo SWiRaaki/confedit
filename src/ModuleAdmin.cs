@@ -24,19 +24,19 @@ internal class ModuleAdmin : Module {
 
 	internal override string Name { get; } = "admin";
 
-	internal bool IsAuthorized( string user_uuid, string scope, string namespace, string access ) {
+	internal bool IsAuthorized( string user_uuid, string scope, string scope_namespace, string access ) {
 		string script = File.ReadAllText( "sql/admin_get_auth.sql" );
 		DataTable result = Program.Database.Select( script, ( "@user_uuid", user_uuid ) );
 
-		foreach( var row in result.Rows ) {
-			string permissions = row["permissions"];
-			string scope_ns = row["scope_ns"];
-			string scope_name = row["scope_name"];
+		foreach( DataRow row in result.Rows ) {
+			string permissions = row["permissions"] as string ?? "";
+			string scope_ns = row["scope_ns"] as string ?? "";
+			string scope_name = row["scope_name"] as string ?? "";
 
 			if ( !permissions.Contains( access ) ) {
 				continue;
 			}
-			if ( scope_ns != "global" && scope_ns != namespace ) {
+			if ( scope_ns != "global" && scope_ns != scope_namespace ) {
 				continue;
 			}
 			if ( scope_name != "any" && scope_name != scope ) {

@@ -119,25 +119,25 @@ internal static class Program {
 		Console.WriteLine();
         Dictionary<string, int> colWidths = new Dictionary<string, int>();
 
-        foreach (DataColumn col in data.Columns)
+        foreach ( DataColumn col in data.Columns )
         {
-            Console.Write(col.ColumnName);
+            Console.Write( col.ColumnName );
             var maxLabelSize = data.Rows.OfType<DataRow>()
-                    .Select(m => (m.Field<object>(col.ColumnName)?.ToString() ?? "").Length)
-                    .OrderByDescending(m => m).FirstOrDefault();
+                    .Select( m => ( m.Field<object>( col.ColumnName )?.ToString() ?? "" ).Length )
+                    .OrderByDescending( m => m ).FirstOrDefault();
 
-            colWidths.Add(col.ColumnName, maxLabelSize);
-            for (int i = 0; i < maxLabelSize - col.ColumnName.Length + 10; i++) Console.Write(" ");
+            colWidths.Add( col.ColumnName, maxLabelSize );
+            for ( int i = 0; i < maxLabelSize - col.ColumnName.Length + 10; ++i ) Console.Write( " " );
         }
 
         Console.WriteLine();
 
-        foreach (DataRow dataRow in data.Rows)
+        foreach ( DataRow dataRow in data.Rows )
         {
-            for (int j = 0; j < dataRow.ItemArray.Length; j++)
+            for ( int j = 0; j < dataRow.ItemArray.Length; ++j )
             {
-                Console.Write(dataRow.ItemArray[j]);
-                for (int i = 0; i < colWidths[data.Columns[j].ColumnName] - dataRow.ItemArray[j].ToString().Length + 10; i++) Console.Write(" ");
+                Console.Write( dataRow.ItemArray[j] );
+                for ( int i = 0; i < colWidths[data.Columns[j].ColumnName] - dataRow.ItemArray[j]!.ToString()!.Length + 10; ++i ) Console.Write( " " );
             }
             Console.WriteLine();
         }

@@ -54,8 +54,14 @@ class Database {
 		cmd.CommandText = command;
 
 		foreach( var parameter in parameters ) {
-			cmd.AddWithValue( parameter.key, parameter.value );
+			cmd.Parameters.AddWithValue( parameter.key, parameter.value );
 		}
+
+		using ( var res = cmd.ExecuteReader() ) {
+			result.Load( res );
+		}
+
+		return result;
 	}
 
 	public SqliteConnection Connection { get; private set; }
