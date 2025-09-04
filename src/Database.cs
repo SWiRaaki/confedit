@@ -47,5 +47,16 @@ class Database {
 		return result;
 	}
 
+	public DataTable Select( string command, params (string key, object value)[] parameters ) {
+		DataTable result = new();
+
+		var cmd = Connection.CreateCommand();
+		cmd.CommandText = command;
+
+		foreach( var parameter in parameters ) {
+			cmd.AddWithValue( parameter.key, parameter.value );
+		}
+	}
+
 	public SqliteConnection Connection { get; private set; }
 }

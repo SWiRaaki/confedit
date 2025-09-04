@@ -24,6 +24,7 @@ public class ScriptsRecord {
 }
 
 public class PatchData {
+	public string File { get; set; } = "";
 	public MetaRecord Meta { get; set; } = new();
 	public RequiredRecord? Required { get; set; }
 	public ScriptsRecord Scripts { get; set; } = new();
@@ -65,6 +66,7 @@ internal abstract class Script {
 		};
 		var content = File.ReadAllText( patchfile );
 		var patch = Toml.ToModel<PatchData>( content, patchfile, options );
+		patch.File = patchfile;
 
 		if ( IsPatchInstalled( patch ) ) {
 			Console.WriteLine( $"Patch {patch.Meta.Major}.{patch.Meta.Minor}.{patch.Meta.Patch} already installed" );
@@ -132,6 +134,9 @@ internal abstract class Script {
 	}
 
 	internal static void MovePatchFiles( PatchData patch, string destination ) {
+		if ( File.Exists( patch.File ) ) {
+			File.Move( patch.File, $"{patch.Scripts.Directory}{destination}/{patch.File}" )
+		}
 		for ( int i = 0; i < patch.Scripts.Create.Count; ++i ) {
 			var file = $"{patch.Scripts.Directory}{patch.Scripts.Create[i]}";
 			if ( File.Exists( file ) ) {

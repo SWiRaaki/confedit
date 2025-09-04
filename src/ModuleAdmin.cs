@@ -24,6 +24,31 @@ internal class ModuleAdmin : Module {
 
 	internal override string Name { get; } = "admin";
 
+	internal bool IsAuthorized( string user_uuid, string scope, string namespace, string access ) {
+		string script = File.ReadAllText( "sql/admin_get_auth.sql" );
+		DataTable result = Program.Database.Select( script, ( "@user_uuid", user_uuid ) );
+
+		foreach( var row in result.Rows ) {
+			string permissions = row["permissions"];
+			string scope_ns = row["scope_ns"];
+			string scope_name = row["scope_name"];
+
+			if ( !permissions.Contains( access ) ) {
+				continue;
+			}
+			if ( scope_ns != "global" && scope_ns != namespace ) {
+				continue;
+			}
+			if ( scope_name != "any" && scope_name != scope ) {
+				continue;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	internal bool CreateGroup( object caller, Request request, out Response response ) {
 		if ( request.Module != Name || request.Function != "create_group" ) {
 			response = new Response() {
@@ -50,76 +75,16 @@ internal class ModuleAdmin : Module {
 		}
 
 		var token = Jwt.FromString( reqdata.Token );
-		DataTable auths = Program.Database.Select(
-			@"WITH
-target_user AS (
-  SELECT user_serial, uuid, name
-  FROM std_user
-  WHERE uuid = '" + token.Payload.JWTID + @"'
-),
-user_groups AS (
-  SELECT g.group_serial, g.uuid, g.name
-  FROM std_group g
-  JOIN std_user_gr ug ON ug.group_serial = g.group_serial
-  JOIN target_user tu ON tu.user_serial  = ug.user_serial
-),
-accessees AS (
-  -- the principals that can carry auth for this user: the user and all their groups
-  SELECT uuid, name, 'user'  AS kind FROM target_user
-  UNION ALL
-  SELECT uuid, name, 'group' AS kind FROM user_groups
-),
-raw_auth AS (
-  SELECT
-      a.auth_serial,
-      a.uuid           AS auth_uuid,
-      a.accessee,
-      ac.kind          AS granted_via,      -- 'user' or 'group'
-      ac.name          AS accessee_name,
-      a.access,
-      a.scope_serial,
-      a.rule_serial,
-      s.name           AS scope_name,
-      s.namespace      AS scope_ns,
-      r.name           AS rule_name,
-      r.namespace      AS rule_ns
-  FROM std_auth a
-  JOIN accessees ac        ON ac.uuid       = a.accessee
-  LEFT JOIN std_scope s    ON s.scope_serial = a.scope_serial
-  LEFT JOIN std_rule  r    ON r.rule_serial  = a.rule_serial
-),
-expanded AS (
-  -- decode the access bitfield into individual permissions
-  SELECT
-    ra.auth_serial,
-    sa.description AS permission
-  FROM raw_auth ra
-  JOIN std_acces sa ON (ra.access & sa.bitflag) <> 0
-)
-SELECT
-  ra.auth_serial,
-  ra.auth_uuid,
-  ra.granted_via,                   -- 'user' or 'group'
-  ra.accessee_name,                 -- user/group name
-  ra.accessee,                      -- user/group UUID (the principal on the auth row)
-  ra.scope_serial,
-  ra.scope_ns || ':' || ra.scope_name AS scope,
-  ra.rule_serial,
-  CASE WHEN ra.rule_serial IS NULL THEN NULL
-       ELSE ra.rule_ns || ':' || ra.rule_name
-  END                               AS rule,
-  ra.access,                        -- original bitfield
-  group_concat(e.permission, ', ') AS permissions
-FROM raw_auth ra
-LEFT JOIN expanded e ON e.auth_serial = ra.auth_serial
-GROUP BY
-  ra.auth_serial, ra.auth_uuid, ra.granted_via, ra.accessee_name, ra.accessee,
-  ra.scope_serial, ra.scope_name, ra.scope_ns, ra.rule_serial, ra.rule_name, ra.rule_ns, ra.access
-ORDER BY
-  ra.granted_via, ra.scope_ns, ra.scope_name, ra.rule_ns, ra.rule_name, ra.auth_serial;"
-		);
-
-		auths.WriteToCsv( "select.csv" );
+		if ( !IsAuthorized( token.Payload.JWTID, "std_auth", "create_group", "Create" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = -2,
+				Errors = {
+					new Error( -9, $"Not authorized to create group {reqdata.Name}" )
+				}
+			};
+			return false;
+		}
 
 		try {
 			Program.Database.Execute( $"insert into std_group(uuid,name,abbreviation,description) values('{Guid.NewGuid():N}',{reqdata.Name},{reqdata.Abbreviation},{reqdata.Description})" );
