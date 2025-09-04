@@ -16,10 +16,11 @@
     if (form) {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
+            errors.clearAllErrors?.(form);
+
             try {
                 const response = await dataSender.sendForm(form);
                 if (response.ok) {
-                    errors.clearGlobalError();
                     logMessage("Formulardaten erfolgreich gesendet.");
                 } else {
                     errors.setGlobalError(response.message || "Unbekannter Fehler");
@@ -35,7 +36,7 @@
     if (btnCancel) {
         btnCancel.addEventListener("click", () => {
             form?.reset();
-            errors.clearGlobalError();
+            errors.clearAllErrors?.(form);
             logMessage("Formular zurückgesetzt.");
         });
     }
@@ -49,8 +50,28 @@
     });
 
     if (connectBtn && closeBtn && sendBtn && messageInput) {
-        connectBtn.addEventListener("click", () => dataSender.connectWS());
-        closeBtn.addEventListener("click", () => dataSender.disconnectWS());
+        closeBtn.disabled = true;
+        sendBtn.disabled = true;
+        messageInput.disabled = true;
+
+        connectBtn.addEventListener("click", () => {
+            dataSender.connectWS();
+            connectBtn.disabled = true;
+            closeBtn.disabled = false;
+            sendBtn.disabled = false;
+            messageInput.disabled = false;
+            logMessage("WebSocket Verbindung wird hergestellt...");
+        });
+
+        closeBtn.addEventListener("click", () => {
+            dataSender.disconnectWS();
+            connectBtn.disabled = false;
+            closeBtn.disabled = true;
+            sendBtn.disabled = true;
+            messageInput.disabled = true;
+            logMessage("WebSocket Verbindung getrennt.");
+        });
+
         sendBtn.addEventListener("click", () => {
             const message = messageInput.value;
             dataSender.sendRaw(message);
