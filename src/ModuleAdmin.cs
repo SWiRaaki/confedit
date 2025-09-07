@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 internal class AdminCreateGroupRequestData {
 	[JsonProperty("auth")]
-	internal string Token { get; set; } = "";
+	internal string Auth { get; set; } = "";
 
 	[JsonProperty("name")]
 	internal string Name { get; set; } = "";
@@ -24,8 +24,9 @@ internal class ModuleAdmin : Module {
 
 	internal override string Name { get; } = "admin";
 
-	internal bool IsAuthorized( string user_uuid, string scope, string scope_namespace, string access ) {
-		string script = File.ReadAllText( "sql/admin_get_auth.sql" );
+	internal static bool IsAuthorized( string user_uuid, string scope_namespace, string scope, string access ) {
+		try {
+			string script = File.ReadAllText( "sql/admin_get_auth.sql" );
 		DataTable result = Program.Database.Select( script, ( "@user_uuid", user_uuid ) );
 
 		foreach( DataRow row in result.Rows ) {
@@ -44,6 +45,10 @@ internal class ModuleAdmin : Module {
 			}
 
 			return true;
+		}
+		}
+		catch( Exception e ) {
+			Console.WriteLine( $"Authorization failed: {e.Message}" );
 		}
 
 		return false;
@@ -74,7 +79,7 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		var token = Jwt.FromString( reqdata.Token );
+		var token = Jwt.FromString( reqdata.Auth );
 		if ( !IsAuthorized( token.Payload.JWTID, "std_auth", "create_group", "Create" ) ) {
 			response = new Response() {
 				Module = Name,
