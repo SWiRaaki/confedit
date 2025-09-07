@@ -27,6 +27,7 @@ internal static class Program {
 		Module = new();
 		Config = new();
 		Scripter = new();
+		ConfigProvider = new();
 
 		var auth = new ModuleAuth();
 		Module.Add( auth.Name, auth );
@@ -34,8 +35,17 @@ internal static class Program {
 		var admin = new ModuleAdmin();
 		Module.Add( admin.Name, admin );
 
+		var fm = new ModuleFm();
+		Module.Add( fm.Name, fm );
+
 		var sriptql = new ScriptQLite();
 		Scripter.Add( sriptql.Name, sriptql );
+
+		var xmlprovider = new XmlConfigProvider();
+		ConfigProvider.Add( ".xml", xmlprovider );
+
+		var jsonprovider = new JsonConfigProvider();
+		ConfigProvider.Add( ".json", jsonprovider );
 	}
 
 	static async Task Main( string[] args ) {
@@ -149,4 +159,5 @@ internal static class Program {
 	internal static Dictionary<string, Module> Module { get; private set; }
 	internal static AppConfig Config { get; private set; }
 	internal static Dictionary<string, Script> Scripter { get; private set; }
+	internal static Dictionary<string, IConfigProvider> ConfigProvider { get; private set; }
 }

@@ -85,8 +85,8 @@ internal class Jwt {
 			return jwt;
 		}
 
-		jwt.Header = JsonConvert.DeserializeObject<HeaderType>( headertext );
-		jwt.Payload = JsonConvert.DeserializeObject<PayloadType>( payloadtext );
+		jwt.Header = JsonConvert.DeserializeObject<HeaderType>( headertext )!;
+		jwt.Payload = JsonConvert.DeserializeObject<PayloadType>( payloadtext )!;
 		jwt.Secret = Program.Config.Secret;
 		return jwt;
 	}
@@ -192,7 +192,7 @@ internal class ModuleAuth : Module {
 		};
 
 		if ( caller is Client ) {
-			Client client = caller as Client;
+			Client client = (caller as Client)!;
 			client.ID = new( row["uuid"].ToString() ?? "" );
 		}
 

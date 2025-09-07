@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Config>
+  <ThingDef ParentName="ResourceBase">
+    <defName>GoldenFlesh</defName>
+    <label>rotten flesh</label>
+    <description>Inedible flesh removed from corpses to grind bone meal</description>
+    <thingClass>ThingWithComps</thingClass>
+    <selectable Type="bool">true</selectable>
+    <category>Item</category>
+    <drawrType>MapMeshOnly</drawrType>
+    <tickerType>Rare</tickerType>
+    <rotatable Type="bool">false</rotatable>
+    <altitudeLayer>Item</altitudeLayer>
+    <resourceReadoutPriority>Middle</resourceReadoutPriority>
+    <drawGuiOverlay Type="bool">true</drawGuiOverlay>
+    <healthAffectsPrice Type="bool">false</healthAffectsPrice>
+    <stackLimit Type="integer">75</stackLimit>
+    <alwaysHaulable Type="bool">true</alwaysHaulable>
+    <socialPropernessMatters Type="bool">true</socialPropernessMatters>
+    <tradeablilty>Sellable</tradeablilty>
+    <pathCost Type="integer">14</pathCost>
+    <statBases>
+      <MaxHitPoints Type="integer">60</MaxHitPoints>
+      <Beauty Type="integer">-6</Beauty>
+      <DeteriorationRate Type="integer">6</DeteriorationRate>
+      <Mass Type="float">0.03</Mass>
+      <Flammability Type="float">0.5</Flammability>
+      <Nutrition Type="float">0.05</Nutrition>
+      <FoodPoisonChanceFixedHuman Type="float">0.02</FoodPoisonChanceFixedHuman>
+      <MarketValue Type="float">0.2</MarketValue>
+    </statBases>
+    <graphicData>
+      <texPath>Things/Item/RottenFlesh</texPath>
+      <graphicClass>Graphic_StackCount</graphicClass>
+    </graphicData>
+    <thingCategories>
+      <li>Necromancy</li>
+      <li>MeatRaw</li>
+    </thingCategories>
+  </ThingDef>
+</Config>
