@@ -55,6 +55,7 @@ internal class Client {
         catch (Exception ex)
         {
             Console.WriteLine( $"Error with client {ID}: {ex.Message}" );
+			Console.WriteLine( ex );
         }
         finally
         {
