@@ -1,0 +1,43 @@
+﻿{
+	"ThingDef": {
+		"defName": "RottenFlesh",
+		"label": "rotten flesh",
+		"description": "Inedible flesh removed from corpses to grind bone meal",
+		"thingClass": "ThingWithComps",
+		"selectable": true,
+		"category": "Item",
+		"drawrType": "MapMeshOnly",
+		"tickerType": "Rare",
+		"rotatable": false,
+		"altitudeLayer": "Item",
+		"resourceReadoutPriority": "Middle",
+		"drawGuiOverlay": true,
+		"healthAffectsPrice": false,
+		"stackLimit": 75,
+		"alwaysHaulable": true,
+		"socialPropernessMatters": true,
+		"tradeablilty": "Sellable",
+		"pathCost": 14,
+		"statBases": {
+			"MaxHitPoints": 60,
+			"Beauty": -6,
+			"DeteriorationRate": 6,
+			"Mass": 0.03,
+			"Flammability": 0.5,
+			"Nutrition": 0.05,
+			"FoodPoisonChanceFixedHuman": 0.02,
+			"MarketValue": 0.2
+		},
+		"graphicData": {
+			"texPath": "Things/Item/RottenFlesh",
+			"graphicClass": "Graphic_StackCount"
+		},
+		"thingCategories": [
+			"Necromancy",
+			"MeatRaw"
+		]
+	},
+	"%ThingDef": {
+		"ParentName": "ResourceBase"
+	}
+}

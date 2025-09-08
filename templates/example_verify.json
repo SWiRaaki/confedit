@@ -1,0 +1,7 @@
+{
+	"module": "verifier",
+	"function": "numeric",
+	"data": {
+		"value": "0x13579",
+	}
+}
