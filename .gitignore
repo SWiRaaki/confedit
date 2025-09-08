@@ -1,0 +1,56 @@
+# Build Folders
+bin/
+obj/
+
+# Visual Studio Code settings
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.vspscc
+*.vssscc
+*.ncb
+*.psess
+*.pidb
+*.svclog
+*.sdf
+*.dbmdl
+*.dbproj.schemaview
+
+# Logs and temporary files
+*.log
+*.tlog
+*.tmp
+*.cache
+
+# NuGet Packages
+*.nupkg
+project.nuget.cache
+packages/
+
+# Dotnet CLI generated files
+project.assets.json
+project.lock.json
+project.nuget.cache
+
+# Debug and Release
+Debug/
+Release/
+
+# Coverage and Test results
+TestResults/
+coverage/
+*.coverage
+*.testlog
+
+# Rider & JetBrains files
+.idea/
+*.sln.iml
+
+# SQLite database (if generated locally)
+*.db
+*.sqlite
+
+# Other IDE-specific files (optional)
+.vs/

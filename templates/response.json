@@ -1,0 +1,14 @@
+{
+	"module": "string",
+	"code": 0,
+	"data": {
+
+	},
+	"errors": [
+		{
+			"code": -1,
+			"msg": "string"
+		}
+	]
+]
+}
