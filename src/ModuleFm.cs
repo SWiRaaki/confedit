@@ -172,7 +172,7 @@ internal class ModuleFm : Module {
 				path = Path.Combine( loc, reqdata.Configuration );
 			}
 
-			var loaded = provider.Load( path );
+			var loaded = provider!.Load( path );
 			if ( loaded.Code != 0 ) {
 				response = new Response() {
 					Module = Name,
@@ -184,7 +184,7 @@ internal class ModuleFm : Module {
 				return false;
 			}
 
-			loaded.Data.UID = (string)result.Rows[0]["uuid"];
+			loaded.Data!.UID = (string)result.Rows[0]["uuid"];
 
 			response = new Response() {
 				Module = Name,
@@ -266,8 +266,8 @@ internal class ModuleFm : Module {
 				path = Path.Combine( loc, reqdata.Configuration );
 			}
 
-			var tree = request.Data.ToObject<ConfigTree>();
-			var saved = provider.Save( path, tree )!;
+			var tree = request.Data.ToObject<ConfigTree>()!;
+			var saved = provider!.Save( path, tree )!;
 			if ( saved.Code != 0 ) {
 				response = new Response() {
 					Module = Name,

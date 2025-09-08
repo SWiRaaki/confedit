@@ -86,7 +86,7 @@ internal class JsonConfigProvider : IConfigProvider {
 
 		if ( meta != null ) {
 			foreach( var token in meta.Properties() ) {
-				node.Meta[token.Name] = (string)token.Value;
+				node.Meta[token.Name] = (string)token.Value!;
 			}
 		}
 
@@ -130,11 +130,11 @@ internal class JsonConfigProvider : IConfigProvider {
 			break;
 		case JTokenType.Date:
 			node.Type = "datetime";
-			node.Value = (string)value;
+			node.Value = (string)value!;
 			break;
 		default:
 			node.Type = "string";
-			node.Value = (string)value;
+			node.Value = (string)value!;
 			break;
 		}
 
