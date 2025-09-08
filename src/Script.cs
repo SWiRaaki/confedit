@@ -134,6 +134,7 @@ internal abstract class Script {
 	}
 
 	internal static void MovePatchFiles( PatchData patch, string destination ) {
+		Directory.CreateDirectory( $"{patch.Scripts.Directory}{destination}" );
 		if ( File.Exists( patch.File ) ) {
 			File.Move( patch.File, $"{patch.Scripts.Directory}{destination}/{Path.GetFileName( patch.File )}" );
 		}
