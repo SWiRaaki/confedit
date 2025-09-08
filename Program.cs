@@ -46,6 +46,9 @@ internal static class Program {
 
 		var jsonprovider = new JsonConfigProvider();
 		ConfigProvider.Add( ".json", jsonprovider );
+
+		var yamlprovider = new YamlConfigProvider();
+		ConfigProvider.Add( ".yaml", yamlprovider );
 	}
 
 	static async Task Main( string[] args ) {
