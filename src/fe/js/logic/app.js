@@ -47,6 +47,26 @@ function createUser(username, role) {
     `;
 }
 
+function editUser(row, username, role) {
+    if (!row) return;
+
+    const permissions = getRolePermissions(role);
+    const badgeClass = getRoleBadgeClass(role);
+
+    row.innerHTML = `
+        <td><strong>${username}</strong></td>
+        <td><span class="badge ${badgeClass}">${role}</span></td>
+        <td class="text-center"><input type="checkbox" ${permissions.create ? 'checked' : ''}></td>
+        <td class="text-center"><input type="checkbox" ${permissions.read ? 'checked' : ''}></td>
+        <td class="text-center"><input type="checkbox" ${permissions.update ? 'checked' : ''}></td>
+        <td class="text-center"><input type="checkbox" ${permissions.delete ? 'checked' : ''}></td>
+        <td class="text-center">
+          <button type="button" class="edit-user">✏️</button>
+          <button type="button" class="delete-user">🗑️</button>
+        </td>
+    `;
+}
+
 function createUserModal() {
     // Create modal backdrop
     const backdrop = document.createElement('div');
@@ -189,8 +209,18 @@ document.addEventListener("DOMContentLoaded", () => {
         userTable.addEventListener("click", (e) => {
             if (e.target.classList.contains("edit-user")) {
                 const row = e.target.closest("tr");
-                alert("Bearbeite Benutzer: " + row.cells[0].innerText);
+                const currentUsername = row.cells[0].innerText.trim();
+                const currentRole = row.cells[1].innerText.trim();
+
+                const newUsername = prompt("Neuer Benutzername:", currentUsername);
+                if (!newUsername) return;
+
+                const newRole = prompt("Neue Rolle (Administrator, Editor, Viewer):", currentRole);
+                if (!newRole) return;
+
+                editUser(row, newUsername, newRole);
             }
+
             if (e.target.classList.contains("delete-user")) {
                 const row = e.target.closest("tr");
                 if (confirm("Benutzer wirklich loeschen?")) {

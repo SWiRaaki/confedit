@@ -1,0 +1,306 @@
+﻿
+style.css
+
+Dieses Stylesheet definiert das Aussehen und Layout der Benutzeroberfläche. Es steuert Farben, Schriftarten, Abstände, Buttons, Tabellen, Formularelemente, Hinweise und Fehlermeldungen.
+Es sorgt für ein übersichtliches, modernes Design mit klaren Strukturen, Hervorhebung von Fehlern/Hinweisen und gut lesbaren Elementen.
+
+login.html
+
+Die Datei login.html ist die Benutzeroberfläche für die Anmeldung.
+Sie enthält folgende Elemente:
+
+Einen Header mit Navigation, in dem der Menüpunkt „Login“ angezeigt wird.
+
+Ein Login-Formular mit zwei Eingabefeldern:
+
+Benutzer-Abkürzung (z. B. „jd“).
+
+Passwort oder ein anderes Sicherheitsmerkmal („security“).
+
+Einen Button, um die Anmeldedaten abzusenden.
+
+Einen Hinweisbereich, in dem Rückmeldungen wie „Login erfolgreich“ oder Fehlermeldungen erscheinen.
+
+Das Layout verwendet das vorhandene CSS, wodurch das Formular ein einheitliches Design hat und Meldungen (z. B. Fehler oder Erfolg) optisch klar hervorgehoben werden.
+
+
+benutzer_html.html
+
+Die Datei benutzer_html.html ist die Oberfläche zur Verwaltung von Benutzern und deren Rechten.
+Sie enthält folgende Elemente:
+
+Einen Header mit Navigation, in dem der Menüpunkt „Benutzer“ hervorgehoben ist.
+
+Einen Hauptbereich mit dem Titel „Benutzer & Rechte“.
+
+Einen Button „Neuen Benutzer hinzufügen“, über den neue Benutzer in die Tabelle eingetragen werden können.
+
+Eine Tabelle mit Benutzern, die folgende Spalten hat:
+
+Benutzername
+
+Rolle
+
+Rechte (Erstellen, Lesen, Ändern, Löschen) als Checkboxen
+
+Aktionen (Bearbeiten, Löschen) über Buttons
+
+Unterhalb der Tabelle gibt es den Bereich „Rollen-Vorlagen“, in dem vordefinierte Rollen wie Administrator, Editor oder Viewer per Button auswählbar sind.
+
+
+hilfe_html.html
+
+Die Datei hilfe_html.html stellt eine Hilfeseite mit Anleitungen und FAQs bereit.
+Sie enthält folgende Elemente:
+
+Einen Header mit Navigation, in dem der Menüpunkt „Hilfe“ hervorgehoben ist.
+
+Einen Hauptbereich mit dem Titel „Hilfe & Anleitung“.
+
+Den Abschnitt „Erste Schritte“ mit einer nummerierten Liste, die beschreibt, wie man Dateien auswählt, bearbeitet, speichert und Versionen überprüft.
+
+Den Abschnitt „Dateiverwaltung“ mit einer Aufzählung von Aktionen wie Datei anzeigen, bearbeiten, neu erstellen oder hochladen.
+
+Den Abschnitt „Unterstützte Formate“ mit einer Tabelle, in der Dateiformate (JSON, YAML, XML, INI, TOML) erklärt werden.
+
+Den Abschnitt „Häufige Fragen (FAQ)“, umgesetzt mit aufklappbaren Details-Elementen, die typische Fragen beantworten (z. B. neue Datei, Rechte ändern, Versionsverwaltung, Syntaxfehler).
+
+Den Abschnitt „Tastenkürzel“, in dem eine Tabelle die wichtigsten Shortcuts (Speichern, Neue Datei, Suchen, Rückgängig) darstellt.
+
+
+versionen_html.html
+
+Die Datei versionen_html.html zeigt den Versionsverlauf einer Konfigurationsdatei.
+Sie enthält folgende Elemente:
+
+Einen Header mit Navigation, in dem der Menüpunkt „Versionen“ hervorgehoben ist.
+
+Einen Hauptbereich mit dem Titel „Versionsverlauf“ und einer Anzeige der aktuellen Datei (z. B. config_json.json).
+
+Eine Liste von Radiobuttons, mit denen einzelne Versionen ausgewählt werden können. Jede Version zeigt Uhrzeit, Bearbeiter und Dateigröße. Die aktuelle Version ist vorausgewählt.
+
+Buttons für Aktionen:
+
+„Versionen vergleichen“ startet einen Vergleich zweier Versionen.
+
+„Version wiederherstellen“ setzt eine gewählte Version zurück.
+
+„Zurück“ führt zurück zur vorherigen Seite.
+
+
+main_html.html
+
+Die Datei main_html.html ist die Hauptseite des Konfigurationseditors.
+Sie dient als zentrale Arbeitsoberfläche zum Auswählen, Bearbeiten und Verwalten von Konfigurationsdateien.
+
+Aufbau und Inhalte
+
+Header mit Navigation
+
+Menüeinträge: „Datei“ (aktiv), „Versionen“, „Benutzer“, „Hilfe“.
+
+Ermöglicht den direkten Wechsel zwischen den Modulen des Editors.
+
+Bereich „Dateibaum“
+
+Suchfeld, um Dateien gezielt zu finden.
+
+Eine Mockup-Liste mit Beispiel-Dateien (config_json.json, config.yaml, config.xml, config.ini, config.toml).
+
+Bereich „Willkommen im Konfigurationseditor“
+
+Ein Hinweistext erklärt, dass zuerst eine Datei ausgewählt werden muss.
+
+Fehlerbereich (#globalErrors) für globale Fehlermeldungen.
+
+Formular configForm zur Bearbeitung von Konfigurationswerten:
+
+Feature aktivieren: Checkbox.
+
+Server Name: Textfeld mit Validierungsregeln (Pflichtfeld, min/max Länge).
+
+Port: Zahleneingabe mit Bereich 1–65535, inkl. eigener Regel checkPortServer.
+
+Gültig bis: Datumsauswahl.
+
+Buttons: „Bearbeiten“, „Versionen“, „Absenden“ (Submit mit Validierung & Server-Request), „Abbrechen“.
+
+Bereich „WebSocket Test“
+
+Testfeld für eine Validierungs-WebSocket-Verbindung.
+
+Buttons: „Verbinden“, „Trennen“, „Senden“.
+
+Eingabefeld für Nachrichten (z. B. {"ping":"pong"}).
+
+Log-Ausgabe (<pre id="log">).
+
+Bereich „Aktionen“
+
+Buttons zum Erstellen einer neuen Datei oder zum Hochladen einer Datei.
+
+Unterbereich „Zuletzt bearbeitet“ mit einer Liste zuletzt geöffneter Dateien (config.json, config.yaml, config.ini).
+
+Eingebundene Skripte
+
+errors.js: Behandlung und Anzeige von Fehlern.
+
+dataSender.js: Senden von Formular-Daten an das Backend.
+
+site.js: Allgemeine Steuerlogik der Seite (z. B. Event-Handling).
+
+
+app.js
+
+Funktion: Steuert die Formularvalidierung, das Senden von Daten sowie die Interaktionen mit Versionen und Benutzerverwaltung.
+
+Hauptfunktionen:
+
+Formular-Handling (configForm)
+
+Verhindert Standard-Submit.
+
+Führt optionale Validierung über validateForm() aus.
+
+Baut aus FormData ein JSON-Objekt.
+
+Sendet Daten über sendDataToServer().
+
+Versionen-Handling
+
+Button „Vergleichen“: Startet einen Vergleich für die ausgewählte Version.
+
+Button „Wiederherstellen“: Meldet die Wiederherstellung einer Version.
+
+Wenn keine Version gewählt ist → Fehlermeldung per alert.
+
+Benutzerverwaltung (userTable)
+
+Button „Benutzer hinzufügen“: Fügt eine neue Tabellenzeile mit Platzhalterdaten und Checkboxen hinzu.
+
+„Bearbeiten“-Button: Zeigt ein alert mit Benutzername.
+
+„Löschen“-Button: Fragt per confirm, ob Benutzer wirklich gelöscht werden soll, und entfernt ggf. die Zeile.
+
+
+datasender.js
+
+Funktion: Stellt Funktionen bereit, um Formulardaten in strukturierte Requests umzuwandeln und sie per WebSocket an das Backend zu senden.
+
+Hauptfunktionen:
+
+Datentyp-Erkennung (detectType)
+Erkennt automatisch Typen wie bool, integer, float, datetime, list oder string.
+
+Item-Struktur (createItem)
+Baut einen standardisierten Konfigurations-Eintrag (Name, Wert, Typ, Kind-Elemente, Meta).
+
+Request-Aufbau (buildConfigRequest)
+Erstellt einen JSON-Request mit: Modul, Funktion, Config-Namen, UID und Items.
+
+Senden über WebSocket (sendConfig)
+
+Sendet Request als JSON-String, falls Verbindung offen ist.
+
+Andernfalls Fehlermeldung + alert.
+
+Formular → Request (buildTreeFromForm)
+
+Baut aus HTML-Formularfeldern eine Item-Struktur.
+
+Nutzt detectType für Typbestimmung.
+
+Initialisierung bei Seitenstart
+
+Baut WebSocket-Verbindung zu ws://localhost:8080 auf.
+
+Registriert Event-Handler für open, error, message.
+
+Fängt submit vom Formular ab, baut Request und sendet ihn.
+
+
+errors.js
+
+Funktion: Behandelt und zeigt Fehler für Benutzer an.
+→ Keine Validierung, nur Darstellung.
+
+Hauptfunktionen:
+
+setError(el, message)
+Zeigt Fehlermeldung neben einem Feld (.hint).
+
+clearError(el)
+Entfernt Fehlermeldung von einem Feld.
+
+setGlobalError(msg)
+Zeigt globale Fehler im Bereich #globalErrors.
+
+handleServerErrors(errors)
+
+Zeigt errors.global als globale Meldung.
+
+Geht alle errors.fields durch und markiert betroffene Felder mit setError.
+
+
+site.js
+
+Funktion: Steuert die allgemeine Seitenlogik inkl. Formular, Aktionen und WebSocket-Testfunktionen.
+
+Hauptfunktionen:
+
+Formular-Handling
+
+Fängt submit ab, sendet Daten per dataSender.sendForm().
+
+Erfolgreich → Meldung im Log + Entfernen globaler Fehler.
+
+Fehler → errors.setGlobalError() + Logmeldung.
+
+Abbrechen-Button (btnCancel)
+
+Setzt Formular zurück.
+
+Entfernt globale Fehler.
+
+Schreibt Meldung ins Log.
+
+Aktionen (button[data-action])
+
+Führt dataSender.sendAction(action) aus.
+
+Schreibt ins Log: „Aktion ausgeführt: …“.
+
+WebSocket-Testbereich
+
+connectBtn: Baut Verbindung auf (dataSender.connectWS).
+
+closeBtn: Trennt Verbindung (dataSender.disconnectWS).
+
+sendBtn: Sendet Rohtext (dataSender.sendRaw(message)).
+
+Logging (logMessage)
+
+Alle Meldungen werden ins Log-Feld (#log) geschrieben.
+
+Scrollt automatisch nach unten.
+
+
+login.js
+
+Die Datei login.js steuert die gesamte Login-Logik und verbindet das Frontend mit dem Backend.
+
+Beim Absenden des Formulars wird der Standard-Seitenreload verhindert, damit die Daten per JavaScript gesendet werden können.
+
+Die Eingaben des Benutzers (Abkürzung und Passwort) werden aus den Formularfeldern gelesen.
+
+Es erfolgt eine erste Prüfung: Wenn ein Feld leer ist, erscheint eine Fehlermeldung im Hinweisbereich.
+
+Sind die Eingaben vollständig, werden sie per POST-Request im JSON-Format an das Backend geschickt. Dabei wird das Modul „auth“ mit der Funktion „login“ angesprochen – so wie in der Spezifikation FE-07 #29 beschrieben.
+
+Die Antwort des Servers wird ausgewertet:
+
+Wenn der Code 0 zurückgegeben wird, gilt die Anmeldung als erfolgreich. Das Backend liefert dann einen JWT-Token zurück. Dieser wird im localStorage des Browsers gespeichert. Anschließend erfolgt eine Weiterleitung auf die Hauptseite (main.html).
+
+Wenn der Code negativ ist, liegt ein Fehler vor. Die Fehlermeldung des Servers wird im Hinweisbereich angezeigt.
+
+Falls ein Netzwerkfehler oder ein Serverproblem auftritt, erscheint eine allgemeine Fehlermeldung „Serverfehler – bitte später erneut versuchen“.
