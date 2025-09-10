@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versionsverlauf - Konfigurationseditor</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main.html">Datei</a></li>
+                <li><a href="versionen.html"  class="active">Versionen</a></li>
+                <li><a href="benutzer.html">Benutzer</a></li>
+                <li><a href="hilfe.html">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="card">
+            <div class="card-header">
+                <h1 class="mb-0">Versionsverlauf</h1>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <p class="mb-0 text-muted">Datei: <strong>config_json.json</strong></p>
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">← Zurück</button>
+                </div>
+
+                <h2>Versionen</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="d-flex align-items-start mb-3">
+                                <input type="radio" id="version1" name="version-select" value="1" class="mt-1">
+                                <label for="version1" class="ml-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>12:00 - Version 1</strong><br>
+                                            <small class="text-muted">Erstellt von admin | 2.8 kB</small>
+                                        </div>
+                                        <span class="badge badge-secondary">Alt</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="d-flex align-items-start mb-3">
+                                <input type="radio" id="version2" name="version-select" value="2" class="mt-1">
+                                <label for="version2" class="ml-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>12:05 - Version 2</strong><br>
+                                            <small class="text-muted">Bearbeitet von user1 | 2.7 kB</small>
+                                        </div>
+                                        <span class="badge badge-warning">Älter</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="d-flex align-items-start mb-3">
+                                <input type="radio" id="version3" name="version-select" value="3" checked class="mt-1">
+                                <label for="version3" class="ml-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>12:10 - Version 3 (aktuell)</strong><br>
+                                            <small class="text-muted">Bearbeitet von admin | 2.8 kB</small>
+                                        </div>
+                                        <span class="badge badge-success">Aktuell</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center mt-4" style="gap: 0.5rem;">
+                    <button type="button" id="compare-versions" class="btn btn-info">📊 Versionen vergleichen</button>
+                    <button type="button" id="restore-version" class="btn btn-warning">🔄 Version wiederherstellen</button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="../js/logic/app.js"></script>
+</body>
+</html>

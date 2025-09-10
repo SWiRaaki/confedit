@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hilfe & Anleitung - Konfigurationseditor</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main.html">Datei</a></li>
+                <li><a href="versionen.html">Versionen</a></li>
+                <li><a href="benutzer.html">Benutzer</a></li>
+                <li><a href="hilfe.html"  class="active">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1 class="text-center">Hilfe & Anleitung</h1>
+
+        <section class="card">
+            <div class="card-header">
+                <h2 class="mb-0">📝 Erste Schritte</h2>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>Wählen Sie im Datei-Bereich eine Konfigurationsdatei aus dem Dateibaum aus</li>
+                    <li>Klicken Sie auf <strong>Bearbeiten</strong>, um die Datei zu ändern</li>
+                    <li>Speichern Sie Ihre Änderungen mit dem <strong>Speichern</strong>-Button</li>
+                    <li>Überprüfen Sie den Versionsverlauf unter <strong>Versionen</strong></li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2 class="mb-0">📁 Dateiverwaltung</h2>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li><strong>Datei anzeigen:</strong> Klicken Sie auf eine Datei im Dateibaum</li>
+                    <li><strong>Datei bearbeiten:</strong> Klicken Sie auf "Bearbeiten" oder nutzen Sie den Menüpunkt</li>
+                    <li><strong>Neue Datei:</strong> Nutzen Sie den "Neue Datei erstellen" Button</li>
+                    <li><strong>Datei hochladen:</strong> Nutzen Sie den "Datei hochladen" Button</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2 class="mb-0">🔧 Unterstützte Formate</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Format</th>
+                                <th>Erweiterung</th>
+                                <th>Beschreibung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-primary">JSON</span></td>
+                                <td><code>.json</code></td>
+                                <td>JavaScript Object Notation</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">YAML</span></td>
+                                <td><code>.yaml, .yml</code></td>
+                                <td>YAML Ain't Markup Language</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">XML</span></td>
+                                <td><code>.xml</code></td>
+                                <td>Extensible Markup Language</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-secondary">INI</span></td>
+                                <td><code>.ini</code></td>
+                                <td>Initialization File</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-success">TOML</span></td>
+                                <td><code>.toml</code></td>
+                                <td>Tom's Obvious Minimal Language</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2 class="mb-0">❓ Häufige Fragen (FAQ)</h2>
+            </div>
+            <div class="card-body">
+                <details>
+                    <summary>Wie kann ich eine neue Datei hinzufügen?</summary>
+                    <p>Nutzen Sie den "Neue Datei erstellen" Button im Aktionsbereich der Hauptseite.</p>
+                </details>
+
+                <details>
+                    <summary>Wie kann ich Rechte ändern?</summary>
+                    <p>Gehen Sie zur Benutzer-Seite und bearbeiten Sie die Rechte in der Tabelle.</p>
+                </details>
+
+                <details>
+                    <summary>Wie funktioniert die Versionsverwaltung?</summary>
+                    <p>Jede Änderung wird automatisch als neue Version gespeichert. Sie können ältere Versionen wiederherstellen oder vergleichen.</p>
+                </details>
+
+                <details>
+                    <summary>Was passiert bei Syntaxfehlern?</summary>
+                    <p>Das System validiert Ihre Eingaben und zeigt Fehler an, bevor die Datei gespeichert wird.</p>
+                </details>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2 class="mb-0">⌨️ Tastenkürzel</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Aktion</th>
+                                <th>Tastenkürzel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Speichern</strong></td>
+                                <td><kbd>Strg + S</kbd></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Neue Datei</strong></td>
+                                <td><kbd>Strg + N</kbd></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Suchen</strong></td>
+                                <td><kbd>Strg + F</kbd></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rückgängig</strong></td>
+                                <td><kbd>Strg + Z</kbd></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="../js/logic/app.js"></script>
+</body>
+</html>

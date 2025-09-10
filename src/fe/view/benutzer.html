@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benutzer & Rechte - Konfigurationseditor</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main.html">Datei</a></li>
+                <li><a href="versionen.html">Versionen</a></li>
+                <li><a href="benutzer.html" class="active">Benutzer</a></li>
+                <li><a href="hilfe.html">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="card">
+            <div class="card-header">
+                <h1 class="mb-0">Benutzer & Rechte</h1>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Benutzerverwaltung</h2>
+                    <button type="button" id="add-user" class="btn btn-success">➕ Neuen Benutzer hinzufügen</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="user-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Benutzer</th>
+                                <th>Rolle</th>
+                                <th class="text-center">Erstellen</th>
+                                <th class="text-center">Lesen</th>
+                                <th class="text-center">Ändern</th>
+                                <th class="text-center">Löschen</th>
+                                <th class="text-center">Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>admin</strong></td>
+                                <td><span class="badge badge-danger">Administrator</span></td>
+                                <td class="text-center"><input type="checkbox" checked disabled></td>
+                                <td class="text-center"><input type="checkbox" checked disabled></td>
+                                <td class="text-center"><input type="checkbox" checked disabled></td>
+                                <td class="text-center"><input type="checkbox" checked disabled></td>
+                                <td class="text-center">
+                                    <button type="button" class="edit-user">✏️</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>user1</strong></td>
+                                <td><span class="badge badge-warning">Editor</span></td>
+                                <td class="text-center"><input type="checkbox"></td>
+                                <td class="text-center"><input type="checkbox" checked></td>
+                                <td class="text-center"><input type="checkbox" checked></td>
+                                <td class="text-center"><input type="checkbox"></td>
+                                <td class="text-center">
+                                    <button type="button" class="edit-user">✏️</button>
+                                    <button type="button" class="delete-user">🗑️</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>user2</strong></td>
+                                <td><span class="badge badge-info">Viewer</span></td>
+                                <td class="text-center"><input type="checkbox"></td>
+                                <td class="text-center"><input type="checkbox" checked></td>
+                                <td class="text-center"><input type="checkbox"></td>
+                                <td class="text-center"><input type="checkbox"></td>
+                                <td class="text-center">
+                                    <button type="button" class="edit-user">✏️</button>
+                                    <button type="button" class="delete-user">🗑️</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <section class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="mb-0">Rollen-Vorlagen</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex" style="gap: 0.5rem;">
+                            <button type="button" id="admin-template" class="btn btn-danger" data-role="Administrator">⭐ Administrator</button>
+                            <button type="button" id="editor-template" class="btn btn-warning" data-role="Editor">✏️ Editor</button>
+                            <button type="button" id="viewer-template" class="btn btn-info" data-role="Viewer">👁️ Viewer</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+    <script src="../js/logic/app.js"></script>
+</body>
+</html>

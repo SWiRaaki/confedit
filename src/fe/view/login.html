@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/logic/login.js" defer></script>
+</head>
+<body>
+<header>
+    <nav>
+        <ul>
+            <li><a href="main.html">Datei</a></li>
+            <li><a href="versionen.html">Versionen</a></li>
+            <li><a href="benutzer.html">Benutzer</a></li>
+            <li><a href="hilfe.html">Hilfe</a></li>
+            <li><a href="#" class="active">Login</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <div class="d-flex justify-content-center">
+        <div style="max-width: 400px; width: 100%;">
+            <h1 class="text-center">Login</h1>
+
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="mb-0 text-center">Anmeldung</h2>
+                </div>
+                <div class="card-body">
+                    <form id="loginForm" data-module="auth" data-function="login" data-config="myConfig">
+                        <div class="form-group">
+                            <label for="user">Benutzer (Abkürzung)</label>
+                            <input type="text" id="user" name="user" class="form-control" placeholder="z.B. jd" required aria-describedby="user-help">
+                            <div id="user-help" class="hint">Geben Sie Ihre Benutzerabkürzung ein</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="security">Passwort</label>
+                            <input type="password" id="security" name="security" class="form-control" required aria-describedby="security-help">
+                            <div id="security-help" class="hint">Geben Sie Ihr Passwort ein</div>
+                        </div>
+
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Einloggen</button>
+                        </div>
+                    </form>
+
+                    <p id="loginHint" class="hint text-center mt-3"></p>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+</body>
+</html>

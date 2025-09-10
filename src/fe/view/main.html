@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konfigurationseditor - Hauptseite</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="main.html"  class="active">Datei</a></li>
+                <li><a href="versionen.html">Versionen</a></li>
+                <li><a href="benutzer.html">Benutzer</a></li>
+                <li><a href="hilfe.html">Hilfe</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="d-flex" id="data-tree-container" style="gap: 2rem;">
+            <div style="flex: 0 0 300px;">
+                <section class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Dateibaum</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="datei-suche">Datei suchen:</label>
+                            <input type="search" id="datei-suche" class="form-control" placeholder="Datei suchen...">
+                        </div>
+                        <div id="data-tree">
+                            <h3>Mockup</h3>
+                            <ul>
+                                <li>📄 config_json.json</li>
+                                <li>📄 config.yaml</li>
+                                <li>📄 config.xml</li>
+                                <li>📄 config.ini</li>
+                                <li>📄 config.toml</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div style="flex: 1;">
+                <section class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Willkommen im Konfigurationseditor</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Bitte wählen Sie eine Datei im Dateibaum aus, um sie anzuzeigen oder zu bearbeiten.</p>
+
+                        <div id="globalErrors" class="errorBox"></div>
+
+                        <form id="configForm" data-module="verifier" data-function="verify_numeric" data-config="myConfig">
+                            <fieldset>
+                                <legend class="text-primary">Konfiguration bearbeiten</legend>
+
+                                <div class="form-group">
+                                    <label for="boolean-option">Feature aktivieren:</label>
+                                    <input type="checkbox" id="boolean-option" name="boolean-option">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="string-field">Server Name:</label>
+                                    <input type="text" id="string-field" name="string-field" class="form-control"
+                                           placeholder="server.example.com"
+                                           data-rules="required|minLength:3|maxLength:255">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="number-picker">Port:</label>
+                                    <input type="number" id="number-picker" name="number-picker" class="form-control"
+                                           min="1" max="65535" value="8080"
+                                           data-rules="required|checkPortServer">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="date-picker">Gültig bis:</label>
+                                    <input type="date" id="date-picker" name="date-picker" class="form-control">
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="button" class="btn btn-primary">Bearbeiten</button>
+                                        <button type="button" class="btn btn-info">Versionen</button>
+                                    </div>
+                                    <div>
+                                        <button type="submit" id="btnSubmit" class="btn btn-success">Absenden</button>
+                                        <button type="button" id="btnCancel" class="btn btn-secondary">Abbrechen</button>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </section>
+
+                <div class="ws-panel">
+                    <h3>WebSocket Test</h3>
+                    <div class="d-flex" style="gap: 0.5rem;">
+                        <button id="connectBtn" class="btn btn-success btn-sm">Verbinden (Validierungs-WS)</button>
+                        <button id="closeBtn" class="btn btn-danger btn-sm" disabled>Trennen</button>
+                    </div>
+                    <div class="ws-input-group">
+                        <input id="messageInput" type="text" class="form-control" placeholder='{"ping":"pong"}' disabled>
+                        <button id="sendBtn" class="btn btn-primary btn-sm" disabled>Senden</button>
+                    </div>
+                    <pre id="log"></pre>
+                </div>
+
+                <section class="card mt-4">
+                    <div class="card-header">
+                        <h2 class="mb-0">Aktionen</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex" style="gap: 0.5rem;">
+                            <button type="button" class="btn btn-primary">Neue Datei erstellen</button>
+                            <button type="button" class="btn btn-secondary">Datei hochladen</button>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3>Zuletzt bearbeitet</h3>
+                            <ul>
+                                <li>config.json</li>
+                                <li>config.yaml</li>
+                                <li>config.ini</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/logic/errors.js"></script>
+    <script src="../js/logic/dataSender.js"></script>
+    <script src="../js/logic/site.js"></script>
+</body>
+</html>
