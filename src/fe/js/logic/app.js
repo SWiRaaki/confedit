@@ -180,13 +180,34 @@ document.addEventListener("DOMContentLoaded", () => {
     if (compareBtn) {
         compareBtn.addEventListener("click", () => {
             const selected = document.querySelector("input[name='version-select']:checked");
-            if (selected) {
-                alert("Vergleich gestartet fuer Version: " + selected.value);
-            } else {
-                alert("Bitte zuerst eine Version auswaehlen!");
+            if (!selected) {
+                alert("Bitte zuerst eine Version auswählen!");
+                return;
             }
+
+            const label = document.querySelector(`label[for='${selected.id}']`);
+            if (!label) return;
+
+            let compareContainer = document.getElementById("version-compare-container");
+            if (!compareContainer) {
+                compareContainer = document.createElement("div");
+                compareContainer.id = "version-compare-container";
+                compareContainer.style.border = "1px solid #ccc";
+                compareContainer.style.padding = "1rem";
+                compareContainer.style.marginTop = "1rem";
+                compareContainer.style.backgroundColor = "#f9f9f9";
+                document.querySelector("main section.card .card-body").appendChild(compareContainer);
+            }
+
+            compareContainer.innerHTML = `
+            <h3>Vergleich Version ${selected.value}</h3>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                ${label.innerHTML}
+            </div>
+        `;
         });
     }
+
     if (restoreBtn) {
         restoreBtn.addEventListener("click", () => {
             const selected = document.querySelector("input[name='version-select']:checked");

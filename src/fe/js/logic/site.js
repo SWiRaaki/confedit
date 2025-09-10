@@ -41,13 +41,47 @@
         });
     }
 
-    document.querySelectorAll("button[data-action]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const action = btn.dataset.action;
-            dataSender.sendAction(action);
-            logMessage(`Aktion ausgeführt: ${action}`);
+    const btnNewFile = Array.from(document.querySelectorAll("button.btn-primary")).find(b => b.textContent.includes("Neue Datei erstellen"));
+    const btnUpload = Array.from(document.querySelectorAll("button.btn-secondary")).find(b => b.textContent.includes("Datei hochladen"));
+    const btnVersionen = Array.from(document.querySelectorAll("button.btn-info")).find(b => b.textContent.includes("Versionen"));
+    const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary")).find(b => b.textContent.includes("Bearbeiten"));
+
+    if (btnNewFile) {
+        btnNewFile.addEventListener("click", () => {
+            dataSender.sendAction("newFile");
+            logMessage("Neue Datei Aktion gesendet.");
         });
-    });
+    }
+
+    if (btnUpload) {
+        btnUpload.addEventListener("click", () => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.onchange = () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    dataSender.sendRaw({ action: "uploadFile", filename: file.name, content: reader.result });
+                    logMessage(`Datei hochgeladen: ${file.name}`);
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
+        });
+    }
+
+    if (btnVersionen) {
+        btnVersionen.addEventListener("click", () => {
+            window.location.href = "versionen.html";
+        });
+    }
+
+    if (btnBearbeiten) {
+        btnBearbeiten.addEventListener("click", () => {
+            logMessage("Bearbeiten gedrückt.");
+        });
+    }
 
     if (connectBtn && closeBtn && sendBtn && messageInput) {
         closeBtn.disabled = true;
