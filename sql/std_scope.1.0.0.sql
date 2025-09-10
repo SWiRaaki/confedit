@@ -53,4 +53,26 @@ values (
 	'[GUID]',
 	'thingdef.json',
 	'test'
+);
+
+insert or ignore into std_scope (
+	uuid,
+	name,
+	namespace
 )
+values (
+	'[GUID]',
+	'thingdef.yaml',
+	'test'
+);
+
+insert or ignore into std_scope (
+	uuid,
+	name,
+	namespace
+)
+values (
+	'[GUID]',
+	'thingdef.toml',
+	'test'
+);

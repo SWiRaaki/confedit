@@ -27,8 +27,10 @@ file_scopes AS (
 	WHERE name != 'any'
 	AND name NOT LIKE '://%'
 	AND (
-		name LIKE '%.xml' OR
-		name LIKE '%.json'
+		name LIKE '%.xml'  OR
+		name LIKE '%.json' OR
+		name LIKE '%.yaml' OR
+		name LIKE '%.toml'
 	)
 ),
 container_scopes AS (

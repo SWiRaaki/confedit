@@ -1,23 +1,22 @@
-ThingDef:
-  defName: RottenFlesh
-  label: rotten flesh
-  description: Inedible flesh removed from corpses to grind bone meal
-  thingClass: ThingWithComps
+﻿ThingDef:
+  defName: "RottenFlesh"
+  label: "melting flesh"
+  description: "Inedible flesh removed from corpses to grind bone meal"
+  thingClass: "ThingWithComps"
   selectable: true
-  category: Item
-  drawrType: MapMeshOnly
-  tickerType: Rare
+  category: "Item"
+  drawType: "MapMeshOnly"
+  tickerType: "Rare"
   rotatable: false
-  altitudeLayer: Item
-  resourceReadoutPriority: Middle
+  altitudeLayer: "Item"
+  resourceReadoutPriority: "Middle"
   drawGuiOverlay: true
   healthAffectsPrice: false
   stackLimit: 75
   alwaysHaulable: true
   socialPropernessMatters: true
-  tradeablilty: Sellable
+  tradeablilty: "Sellable"
   pathCost: 14
-
   statBases:
     MaxHitPoints: 60
     Beauty: -6
@@ -27,13 +26,14 @@ ThingDef:
     Nutrition: 0.05
     FoodPoisonChanceFixedHuman: 0.02
     MarketValue: 0.2
-
   graphicData:
-    texPath: Things/Item/RottenFlesh
-    graphicClass: Graphic_StackCount
-
+    texPath: "Things/Item/RottenFlesh"
+    '%texPath':
+      resourceType: PNG
+    graphicClass: "Graphic_StackCount"
   thingCategories:
-    - Necromancy
-    - MeatRaw
-"%ThingDef":
+  - "Necromancy"
+  - "MeatRaw"
+'%ThingDef':
   ParentName: ResourceBase
+...

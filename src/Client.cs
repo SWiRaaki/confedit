@@ -110,6 +110,8 @@ internal class Client {
 				free = binary.Length - offset;
 			}
 			result = await mySocket.ReceiveAsync( new ArraySegment<byte>( binary, offset, free ), CancellationToken.None );
+			free   -= result.Count;
+			offset += result.Count;
 		}
 		return new ReadResult( result.MessageType, binary );
 	}

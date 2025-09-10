@@ -49,10 +49,13 @@ internal static class Program {
 
 		var yamlprovider = new YamlConfigProvider();
 		ConfigProvider.Add( ".yaml", yamlprovider );
+
+		var tomlprovider = new TomlConfigProvider();
+		ConfigProvider.Add( ".toml", tomlprovider );
 	}
 
 	static async Task Main( string[] args ) {
-		Console.WriteLine( "ConfEdit Server V0.2.0" );
+		Console.WriteLine( "ConfEdit Server V1.0.0" );
 		Console.WriteLine( "Reading configurations.." );
 		using (StreamReader stream = new( File.Open( "confedit.json" , FileMode.Open, FileAccess.Read ) ) ) {
 			Config = JsonConvert.DeserializeObject<AppConfig>( stream.ReadToEnd() ) ?? new();
