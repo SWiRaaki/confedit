@@ -41,6 +41,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const user = document.getElementById("user").value.trim();
         const security = document.getElementById("security").value.trim();
 
+        // test
+        if (user === "admin" && security === "admin") {
+            hint.textContent = "Login erfolgreich. Weiterleitung...";
+            hint.className = "hint ok";
+            setTimeout(() => {
+                window.location.href = "../main.html";
+            }, 500);
+            return;
+        }
+
         if (!user || !security) {
             hint.textContent = "Bitte alle Felder ausfüllen.";
             hint.className = "hint error";
@@ -64,4 +74,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dataSender.sendRaw(request);
     });
+
 });
