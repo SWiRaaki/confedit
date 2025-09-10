@@ -6,7 +6,28 @@
     const closeBtn = document.getElementById("closeBtn");
     const sendBtn = document.getElementById("sendBtn");
     const messageInput = document.getElementById("messageInput");
+    const searchInput = document.getElementById("datei-suche");
+    const dataTree = document.getElementById("data-tree");
 
+    if (searchInput && dataTree) {
+        const items = Array.from(dataTree.querySelectorAll("li"));
+
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.toLowerCase();
+
+            items.forEach(li => {
+                li.style.display = "";
+                li.innerHTML = li.textContent; 
+
+                if (query && !li.textContent.toLowerCase().includes(query)) {
+                    li.style.display = "none";
+                } else if (query && li.textContent.toLowerCase().includes(query)) {
+                    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+                    li.innerHTML = li.textContent.replace(regex, `<mark>$1</mark>`);
+                }
+            });
+        });
+    }
     function logMessage(msg) {
         if (!log) return;
         log.innerText += msg + "\n";
