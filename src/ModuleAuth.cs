@@ -47,24 +47,24 @@ internal class Jwt {
 	internal string Secret { get; set; } = "";
 
 	internal static string ToBase64( string text ) {
-		return Base64Url.EncodeToString( Encoding.UTF8.GetBytes( text ) );
-	}
+        return Base64Url.EncodeToString( Encoding.UTF8.GetBytes( text ) );
+    }
 
 	internal static string FromBase64( string text ) {
 		var b64 = Encoding.UTF8.GetBytes( text );
-		return Encoding.UTF8.GetString( Base64Url.DecodeFromUtf8( b64 ) );
-	}
+        return Encoding.UTF8.GetString( Base64Url.DecodeFromUtf8( b64 ) );
+    }
 
-	internal static string ComputeSignatureSegment( string headerb64, string payloadb64 )
+    internal static string ComputeSignatureSegment( string headerb64, string payloadb64 )
     {
         var key = Encoding.UTF8.GetBytes( Program.Config.Secret );
         var data = Encoding.ASCII.GetBytes( $"{headerb64}.{payloadb64}" );
         using var hmac = new HMACSHA256( key );
         var sig = hmac.ComputeHash( data );
-        return Base64Url.EncodeToString( sig );
+		return Base64Url.EncodeToString( sig );
     }
 
-	public override string ToString() {
+    public override string ToString() {
 		var headerjson = JsonConvert.SerializeObject( Header );
 		var payloadjson = JsonConvert.SerializeObject( Payload );
 		var headerb64 = ToBase64( headerjson );

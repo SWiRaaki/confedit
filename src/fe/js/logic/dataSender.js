@@ -1,43 +1,45 @@
-const dataSender = (() => {
-    let ws = null;
-    let onLog = null;
-
-    function log(msg) {
-        console.log(msg);
-        if (onLog) onLog(msg);
+class DataSender {
+    constructor() {
+        this.ws = null;
+        this.onLog = null;
     }
 
-    function connectWS(url = "ws://localhost:8080") {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            log("WebSocket ist bereits verbunden.");
+    log(msg) {
+        console.log(msg);
+        if (this.onLog) this.onLog(msg);
+    }
+
+    connectWS(url = "ws://localhost:8080") {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.log("WebSocket ist bereits verbunden.");
             return;
         }
 
-        ws = new WebSocket(url);
+        this.ws = new WebSocket(url);
 
-        ws.onopen = () => log("WebSocket verbunden.");
-        ws.onerror = (err) => log("WebSocket Fehler: " + err);
-        ws.onclose = () => log("WebSocket geschlossen.");
-        ws.onmessage = (msg) => {
+        this.ws.onopen = () => this.log("WebSocket verbunden.");
+        this.ws.onerror = (err) => this.log("WebSocket Fehler: " + err);
+        this.ws.onclose = () => this.log("WebSocket geschlossen.");
+        this.ws.onmessage = (msg) => {
             try {
                 const data = JSON.parse(msg.data);
-                log("Server-Antwort (JSON): " + JSON.stringify(data));
-                if (data.errors) handleServerErrors(data.errors);
+                this.log("Server-Antwort (JSON): " + JSON.stringify(data));
+                if (data.errors) this.handleServerErrors(data.errors);
             } catch {
-                log("Server-Antwort (Text): " + msg.data);
+                this.log("Server-Antwort (Text): " + msg.data);
             }
         };
     }
 
-    function disconnectWS() {
-        if (!ws) return;
-        ws.close();
-        ws = null;
+    disconnectWS() {
+        if (!this.ws) return;
+        this.ws.close();
+        this.ws = null;
     }
 
-    function sendRaw(message) {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            log("WebSocket nicht verbunden. Nachricht nicht gesendet.");
+    sendRaw(message) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this.log("WebSocket nicht verbunden. Nachricht nicht gesendet.");
             alert("Keine Verbindung zum Server.");
             return;
         }
@@ -47,18 +49,18 @@ const dataSender = (() => {
             payload = JSON.stringify(message);
         }
 
-        ws.send(payload);
-        log("Gesendet: " + payload);
+        this.ws.send(payload);
+        this.log("Gesendet: " + payload);
     }
 
-    async function sendForm(form) {
+    async sendForm(form) {
         if (!form) throw new Error("Kein Formular angegeben.");
 
         const formData = new FormData(form);
         const items = [];
 
         for (const [key, value] of formData.entries()) {
-            let type = detectType(value);
+            let type = this.detectType(value);
             let parsedValue = value;
 
             if (type === "bool") parsedValue = value === "true";
@@ -84,25 +86,31 @@ const dataSender = (() => {
             }
         };
 
-        sendRaw(request);
+        this.sendRaw(request);
 
-        return new Promise((resolve) => {
-            resolve({ ok: true });
-        });
+        return { ok: true };
     }
 
-    function sendAction(actionName) {
+    sendAction(actionName) {
         if (!actionName) return;
-        sendRaw({ action: actionName });
-        log("Aktion gesendet: " + actionName);
+        this.sendRaw({ action: actionName });
+        this.log("Aktion gesendet: " + actionName);
     }
 
-    return {
-        connectWS,
-        disconnectWS,
-        sendRaw,
-        sendForm,
-        sendAction,
-        set onLog(fn) { onLog = fn; },
-    };
-})();
+    set onLogCallback(fn) {
+        this.onLog = fn;
+    }
+
+    detectType(value) {
+        if (value === "true" || value === "false") return "bool";
+        if (!isNaN(parseInt(value, 10)) && Number.isInteger(+value)) return "integer";
+        if (!isNaN(parseFloat(value))) return "float";
+        return "string";
+    }
+
+    handleServerErrors(errors) {
+        errors.forEach(err => this.log("Server-Fehler: " + err.msg));
+    }
+}
+
+const dataSender = new DataSender();

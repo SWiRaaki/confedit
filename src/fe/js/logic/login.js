@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const dataSender = new DataSender();  
     const form = document.getElementById("loginForm");
     const hint = document.getElementById("loginHint");
 
@@ -46,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
             hint.textContent = "Login erfolgreich. Weiterleitung...";
             hint.className = "hint ok";
             setTimeout(() => {
-                window.location.href = "../main.html";
+                window.location.href = "../view/main.html";
             }, 500);
             return;
         }
@@ -74,5 +75,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dataSender.sendRaw(request);
     });
-
 });

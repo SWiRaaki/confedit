@@ -20,7 +20,7 @@
                 li.innerHTML = li.textContent; 
 
                 if (query && !li.textContent.toLowerCase().includes(query)) {
-                    li.style.display = "none";
+                    li.style.display = "none"; btnSubmit
                 } else if (query && li.textContent.toLowerCase().includes(query)) {
                     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
                     li.innerHTML = li.textContent.replace(regex, `<mark>$1</mark>`);
@@ -55,10 +55,18 @@
     }
 
     if (btnCancel) {
+        logMessage("Formular zurückgesetzt.");
         btnCancel.addEventListener("click", () => {
             form?.reset();
             errors.clearAllErrors?.(form);
-            logMessage("Formular zurückgesetzt.");
+        });
+    }
+
+    if (btnSubmit) {
+        logMessage("Vorgenommen.");
+        btnSubmit.addEventListener("click", () => {
+            form?.reset();
+            errors.clearAllErrors?.(form);
         });
     }
 
@@ -68,6 +76,8 @@
     const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary")).find(b => b.textContent.includes("Bearbeiten"));
 
     if (btnNewFile) {
+        logMessage("Erstellung initialisiert.");
+
         btnNewFile.addEventListener("click", () => {
             dataSender.sendAction("newFile");
             logMessage("Neue Datei Aktion gesendet.");
@@ -76,6 +86,7 @@
 
     if (btnUpload) {
         btnUpload.addEventListener("click", () => {
+            logMessage("Geladen.");
             const fileInput = document.createElement("input");
             fileInput.type = "file";
             fileInput.onchange = () => {
@@ -100,7 +111,7 @@
 
     if (btnBearbeiten) {
         btnBearbeiten.addEventListener("click", () => {
-            logMessage("Bearbeiten gedrückt.");
+            logMessage("Bearbeitet.");
         });
     }
 
