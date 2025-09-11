@@ -9,7 +9,7 @@ values (
 	'[GUID]',
 	'root',
 	'root',
-	''
+	'admin?'
 );
 
 insert or ignore into std_user (
@@ -22,5 +22,5 @@ values (
 	'[GUID]',
 	'sysadmin',
 	'sysadmin',
-	''
+	'admin!'
 );

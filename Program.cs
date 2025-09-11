@@ -71,21 +71,19 @@ internal static class Program {
 		Console.WriteLine( $"Listening on {Config.Host}:{Config.Port}.." );
 		while ( true ) {
 			var context = await Listener.GetContextAsync();
-			if (context.Request.IsWebSocketRequest)
+			if ( context.Request.IsWebSocketRequest )
 			{
 				var wsContext = await context.AcceptWebSocketAsync( null );
 				WebSocket webSocket = wsContext.WebSocket;
 
 				Client client = new Client( webSocket );
-				if (await client.Handshake()) {
-					Clients.TryAdd(client.ID, client);
-					Console.WriteLine($"Client connected: {client.ID} (Total: {Clients.Count})");
+				if ( await client.Handshake() ) {
+					Clients.TryAdd( client.ID, client );
+					Console.WriteLine( $"Client connected: {client.ID} (Total: {Clients.Count})" );
 
 					_ = client.Handle();
 				} else {
-					var buf = Encoding.UTF8.GetBytes("Authentification failed");
-					await webSocket.SendAsync(new ArraySegment<byte>(buf), WebSocketMessageType.Text, true, CancellationToken.None);
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                    await webSocket.CloseAsync( WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None );
                 }
 			}
 			else
