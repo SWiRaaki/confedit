@@ -128,11 +128,14 @@ internal class Jwt {
 }
 
 internal class AuthLoginRequestData {
-	[JsonProperty("user", Required = Required.Always)]
+	[JsonProperty("user", Required = Required.AllowNull)]
 	internal string User { get; set; } = "";
 
 	[JsonProperty("security", Required = Required.Always)]
 	internal string Security { get; set; } = "";
+
+	[JsonProperty("grant_type", Required = Required.Always)]
+	internal string GrantType { get; set; } = "";
 }
 
 internal class AuthLoginResponseData {
@@ -174,7 +177,43 @@ internal class ModuleAuth : Module {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, $"Failed authentification: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		if ( reqdata.GrantType == "jwt" ) {
+			var jtoken = Jwt.FromString( reqdata.Security );
+			if ( jtoken.IsExpired() ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Authorization,
+					Errors = {
+						new Error( AuthorizationError.Expired, "Session token is expired!" )
+					}
+				};
+				return false;
+			}
+
+			respdata = new() {
+				Auth = reqdata.Security
+			};
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+
+		if ( string.IsNullOrWhiteSpace( reqdata.User ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided: 'user' not found!" )
 				}
 			};
 			return false;
