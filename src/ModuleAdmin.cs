@@ -192,6 +192,54 @@ internal class AdminDeleteGroupRequestData {
 	internal string UID { get; set; } = "";
 }
 
+internal class AdminListUserGroupsRequestData {
+	[JsonProperty("auth", Required = Required.Always)]
+	internal string Auth { get; set; } = "";
+
+	[JsonProperty("uid", Required = Required.Always)]
+	internal string UID { get; set; } = "";
+}
+
+internal class AdminListUserGroupsResponseData {
+	[JsonProperty("groups")]
+	internal List<string> Groups { get; set; } = new();
+}
+
+internal class AdminListGroupUsersRequestData {
+	[JsonProperty("auth", Required = Required.Always)]
+	internal string Auth { get; set; } = "";
+
+	[JsonProperty("uid", Required = Required.Always)]
+	internal string UID { get; set; } = "";
+}
+
+internal class AdminListGroupUsersResponseData {
+	[JsonProperty("users")]
+	internal List<string> Users { get; set; } = new();
+}
+
+internal class AdminAddUserToGroupRequestData {
+	[JsonProperty("auth", Required = Required.Always)]
+	internal string Auth { get; set; } = "";
+
+	[JsonProperty("user_uid", Required = Required.Always)]
+	internal string UserUID { get; set; } = "";
+
+	[JsonProperty("group_uid", Required = Required.Always)]
+	internal string GroupUID { get; set; } = "";
+}
+
+internal class AdminRemoveUserFromGroupRequestData {
+	[JsonProperty("auth", Required = Required.Always)]
+	internal string Auth { get; set; } = "";
+
+	[JsonProperty("user_uid", Required = Required.Always)]
+	internal string UserUID { get; set; } = "";
+
+	[JsonProperty("group_uid", Required = Required.Always)]
+	internal string GroupUID { get; set; } = "";
+}
+
 internal class ModuleAdmin : Module {
 	internal ModuleAdmin() : base() {
 		Function.Add( "list_users", ListUsers );
@@ -1154,6 +1202,344 @@ internal class ModuleAdmin : Module {
 				Code = RequestError.Unknown,
 				Errors = {
 					new Error( -1, $"Failed to delete groups: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool ListUserGroups( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "list_user_groups" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.list_user_groups" )
+				}
+			};
+			return false;
+		}
+
+		AdminListUserGroupsRequestData reqdata = request.Data.ToObject<AdminListUserGroupsRequestData>()!;
+		AdminListUserGroupsResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "users", "Read" ) || !token.IsAuthorized( "admin", "groups", "Read" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to retrieve user or group list!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var selected = Program.Script.RunScript( "sql/admin_list_user_groups.sql", null );
+			if ( !selected ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.SqlError, $"Failed to retrieve group list of user: [{selected.Code}]{selected.Message}" )
+					}
+				};
+				return false;
+			}
+
+			respdata = new();
+			foreach( DataRow row in selected.Data!.Rows ) {
+				respdata.Groups.Add( (string)row["uuid"] );
+			}
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to retrieve group list of user: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool ListGroupUsers( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "list_group_users" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.list_group_users" )
+				}
+			};
+			return false;
+		}
+
+		AdminListGroupUsersRequestData reqdata = request.Data.ToObject<AdminListGroupUsersRequestData>()!;
+		AdminListGroupUsersResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "users", "Read" ) || !token.IsAuthorized( "admin", "groups", "Read" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to retrieve group or user list!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var selected = Program.Script.RunScript( "sql/admin_list_group_users.sql", null );
+			if ( !selected ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.SqlError, $"Failed to retrieve user list of group: [{selected.Code}]{selected.Message}" )
+					}
+				};
+				return false;
+			}
+
+			respdata = new();
+			foreach( DataRow row in selected.Data!.Rows ) {
+				respdata.Users.Add( (string)row["uuid"] );
+			}
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to retrieve group list of user: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool AddUserToGroup( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "add_user_to_group" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.add_user_to_group" )
+				}
+			};
+			return false;
+		}
+
+		AdminAddUserToGroupRequestData reqdata = request.Data.ToObject<AdminAddUserToGroupRequestData>()!;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "user_gr", "Create" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to link user to group!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var inserted = Program.Script.RunScript(
+				"sql/admin_add_user_to_group.sql",
+				null,
+				("@user_uuid", reqdata.UserUID),
+				("@group_uuid", reqdata.GroupUID)
+			);
+
+			if ( !inserted ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataCreationFailed, $"Failed to link user to group: [{inserted.Code}]{inserted.Message}" )
+					}
+				};
+				return false;
+			}
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to link user to group: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool RemoveUserToGroup( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "remove_user_from_group" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.remove_user_from_group" )
+				}
+			};
+			return false;
+		}
+
+		AdminRemoveUserFromGroupRequestData reqdata = request.Data.ToObject<AdminRemoveUserFromGroupRequestData>()!;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "user_gr", "Delete" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to remove user from group!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var deleted = Program.Script.RunScript(
+				"sql/admin_remove_user_from_group.sql",
+				null,
+				("@user_uuid", reqdata.UserUID),
+				("@group_uuid", reqdata.GroupUID)
+			);
+
+			if ( !deleted ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataCreationFailed, $"Failed to remove user from group: [{deleted.Code}]{deleted.Message}" )
+					}
+				};
+				return false;
+			}
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to remove user from group: {e.Message}" )
 				}
 			};
 			return false;
