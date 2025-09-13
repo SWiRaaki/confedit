@@ -41,9 +41,9 @@ internal static class Program
         var fm = new ModuleFm();
         Module.Add(fm.Name, fm);
 
-        var sriptql = new ScriptQLite();
-        Scripter.Add(sriptql.Name, sriptql);
-        Script = sriptql;
+		var sriptql = new ScriptQLite();
+		Scripter.Add( sriptql.Name, sriptql );
+		Script = sriptql;
 
         var xmlprovider = new XmlConfigProvider();
         ConfigProvider.Add(".xml", xmlprovider);
@@ -74,26 +74,22 @@ internal static class Program
         Listener.Prefixes.Add($"http://{Config.Host}:{Config.Port}/");
         Listener.Start();
 
-        Console.WriteLine($"Listening on {Config.Host}:{Config.Port}..");
-        while (true)
-        {
-            var context = await Listener.GetContextAsync();
-            if (context.Request.IsWebSocketRequest)
-            {
-                var wsContext = await context.AcceptWebSocketAsync(null);
-                WebSocket webSocket = wsContext.WebSocket;
+		Console.WriteLine( $"Listening on {Config.Host}:{Config.Port}.." );
+		while ( true ) {
+			var context = await Listener.GetContextAsync();
+			if ( context.Request.IsWebSocketRequest )
+			{
+				var wsContext = await context.AcceptWebSocketAsync( null );
+				WebSocket webSocket = wsContext.WebSocket;
 
-                Client client = new Client(webSocket);
-                if (await client.Handshake())
-                {
-                    Clients.TryAdd(client.ID, client);
-                    Console.WriteLine($"Client connected: {client.ID} (Total: {Clients.Count})");
+				Client client = new Client( webSocket );
+				if ( await client.Handshake() ) {
+					Clients.TryAdd( client.ID, client );
+					Console.WriteLine( $"Client connected: {client.ID} (Total: {Clients.Count})" );
 
-                    _ = client.Handle();
-                }
-                else
-                {
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+					_ = client.Handle();
+				} else {
+                    await webSocket.CloseAsync( WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None );
                 }
             }
             else
@@ -168,12 +164,12 @@ internal static class Program
         }
     }
 
-    internal static Database Database { get; private set; }
-    internal static ConcurrentDictionary<Guid, Client> Clients { get; private set; }
-    internal static HttpListener Listener { get; private set; }
-    internal static Dictionary<string, Module> Module { get; private set; }
-    internal static AppConfig Config { get; private set; }
-    internal static Dictionary<string, Script> Scripter { get; private set; }
-    internal static Script Script { get; private set; }
-    internal static Dictionary<string, IConfigProvider> ConfigProvider { get; private set; }
+	internal static Database Database { get; private set; }
+	internal static ConcurrentDictionary<Guid, Client> Clients { get; private set; }
+	internal static HttpListener Listener { get; private set; }
+	internal static Dictionary<string, Module> Module { get; private set; }
+	internal static AppConfig Config { get; private set; }
+	internal static Dictionary<string, Script> Scripter { get; private set; }
+	internal static Script Script { get; private set; }
+	internal static Dictionary<string, IConfigProvider> ConfigProvider { get; private set; }
 }
