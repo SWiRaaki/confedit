@@ -52,7 +52,7 @@ internal class TomlConfigProvider: IConfigProvider {
 		try {
 			var root = new TomlTable();
 			foreach( var item in data.Items ) {
-			var element = BuildElement( item );
+				var element = BuildElement( item );
 				root[item.Name] = element.Token;
 
 				if ( element.Meta != null ) {
@@ -62,6 +62,7 @@ internal class TomlConfigProvider: IConfigProvider {
 
 			var content = Toml.FromModel( root );
 			File.WriteAllText( file, content, Encoding.UTF8 );
+
 			return new Result() {
 				Code = 0,
 				Message = "OK"

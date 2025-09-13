@@ -32,6 +32,7 @@ internal class ConfigNode {
 internal class Result {
 	internal int Code { get; set; } = 0;
 	internal string Message { get; set; } = "";
+	public static implicit operator bool( Result result) => result.Code == 0;
 }
 
 internal class Result<T> : Result {

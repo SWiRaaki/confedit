@@ -34,9 +34,9 @@ internal class Client {
 					Console.WriteLine( $"[{ID}]: Received {result.Data.Length} bytes as binary. Unsupported, ignored!" );
 					var response = new Response() {
 						Module = "ce",
-						Code = -1,
+						Code = RequestError.UnknownRequest,
 						Errors = {
-							new Error(-1, "Binary requests are not supported!" )
+							new Error( UnknownRequestError.BinaryNotSupported, "Binary requests are not supported!" )
 						}
 					};
 
@@ -71,17 +71,17 @@ internal class Client {
 		if ( !Program.Module.TryGetValue( request.Module, out module ) ) {
 			response = new Response() {
 				Module = "ce",
-				Code = -1,
+				Code = RequestError.UnknownRequest,
 				Errors = {
-					new Error( -2, $"{request.Module} is not a module ( May be WIP )" )
+					new Error( UnknownRequestError.UnknownModule, $"{request.Module} is not a module!" )
 				}
 			};
 		} else if ( !module.Function.TryGetValue( request.Function, out function ) ) {
 			response = new Response() {
 				Module = "ce",
-				Code = -1,
+				Code = RequestError.UnknownRequest,
 				Errors = {
-					new Error( -2, $"{request.Module}.{request.Function} is not a function ( May be WIP )" )
+					new Error( UnknownRequestError.UnknownFunction, $"{request.Module}.{request.Function} is not a function" )
 				}
 			};
 		} else {

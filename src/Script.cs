@@ -1,3 +1,4 @@
+using System.Data;
 using System.IO;
 using Microsoft.Data.Sqlite;
 using Tomlyn;
@@ -164,5 +165,7 @@ internal abstract class Script {
 		}
 	}
 
-	internal abstract bool RunScript( string file, SqliteTransaction transaction );
+	internal abstract Result RunScript( string file, SqliteTransaction transaction, params (string key, object value)[] parameters );
+
+	internal abstract Result<DataTable> RunScript( string file, params (string key, object value)[] parameters );
 }

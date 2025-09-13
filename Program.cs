@@ -40,6 +40,7 @@ internal static class Program {
 
 		var sriptql = new ScriptQLite();
 		Scripter.Add( sriptql.Name, sriptql );
+		Script = sriptql;
 
 		var xmlprovider = new XmlConfigProvider();
 		ConfigProvider.Add( ".xml", xmlprovider );
@@ -163,5 +164,6 @@ internal static class Program {
 	internal static Dictionary<string, Module> Module { get; private set; }
 	internal static AppConfig Config { get; private set; }
 	internal static Dictionary<string, Script> Scripter { get; private set; }
+	internal static Script Script { get; private set; }
 	internal static Dictionary<string, IConfigProvider> ConfigProvider { get; private set; }
 }
