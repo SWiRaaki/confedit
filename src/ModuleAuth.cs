@@ -207,6 +207,16 @@ internal class ModuleAuth : Module {
 			};
 			return true;
 		}
+		else if ( reqdata.GrantType != "password" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, $"Invalid request data provided: 'grant_type'='{reqdata.GrantType}' not valid!" )
+				}
+			};
+			return false;
+		}
 
 		if ( string.IsNullOrWhiteSpace( reqdata.User ) ) {
 			response = new Response() {
