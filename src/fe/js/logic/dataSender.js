@@ -38,9 +38,10 @@ class DataSender {
     }
 
     sendRaw(message) {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            this.log("WebSocket nicht verbunden. Nachricht nicht gesendet.");
-            alert("Keine Verbindung zum Server.");
+        if (!this.ws) {
+            this.log("WebSocket nicht verbunden. Versuche neu zu verbinden...");
+            this.connectWS();
+            setTimeout(() => this.sendRaw(message), 500); 
             return;
         }
 

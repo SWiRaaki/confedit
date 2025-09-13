@@ -11,10 +11,69 @@
     const dataTree = document.getElementById("data-tree");
     const selectedFileField = document.getElementById("selected-file");
 
+    const jwtToken = window.currentJwtToken || "<<<jwt_token>>>";
+    const serviceName = window.currentService || "defaultService";
+    let selectedFileName = "test";
+
+    dataSender.connectWS("ws://localhost:8080");
+
     function logMessage(msg) {
         if (!log) return;
         log.innerText += msg + "\n";
         log.scrollTop = log.scrollHeight;
+    }
+
+    async function sendRequest(functionName, extraData = {}) {
+        try {
+            let token = localStorage.getItem("authToken");
+
+            if (!token) {
+                const loginRequest = {
+                    module: "auth",
+                    function: "login",
+                    data: {
+                        user: "root",           
+                        security: "admin?",       
+                        grant_type: "password"
+                    }
+                };
+
+                token = await new Promise((resolve, reject) => {
+                    const handler = (msg) => {
+                        try {
+                            const resp = JSON.parse(msg.data);
+                            if (resp.code === 0 && resp.data?.auth) {
+                                dataSender.ws.removeEventListener("message", handler);
+                                localStorage.setItem("authToken", resp.data.auth);
+                                resolve(resp.data.auth);
+                            } else {
+                                reject(new Error(resp.errors?.[0]?.msg || "Login fehlgeschlagen"));
+                            }
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    dataSender.ws.addEventListener("message", handler);
+                    dataSender.sendRaw(loginRequest);
+                });
+            }
+
+            const fmRequest = {
+                module: "fm",
+                function: functionName,
+                data: {
+                    auth: token,
+                    service: extraData.service || "defaultService",
+                    config: extraData.config || "test",
+                }
+            };
+
+            dataSender.sendRaw(fmRequest);
+            console.log("➡️ FM Request gesendet:", fmRequest);
+
+        } catch (err) {
+            console.error("❌ Fehler beim Senden des Requests:", err);
+        }
     }
 
     function initFileList() {
@@ -29,6 +88,12 @@
             fileBtn.addEventListener("click", () => {
                 if (selectedFileField) selectedFileField.value = fileBtn.dataset.filename;
                 logMessage(`Datei ausgewählt: ${fileBtn.dataset.filename}`);
+
+                sendRequest("fm", "get_config", {
+                    auth: localStorage.getItem("authToken"),
+                    service: "defaultService", 
+                    config: fileBtn.dataset.filename
+                });
             });
 
             if (delBtn) {
@@ -40,6 +105,12 @@
                             selectedFileField.value = "";
                         }
                         logMessage(`Datei aus Liste entfernt: ${fileBtn.dataset.filename}`);
+
+                        sendRequest("fm", "delete_config", {
+                            auth: localStorage.getItem("authToken"),
+                            service: "defaultService",
+                            config: fileBtn.dataset.filename
+                        });
                     }
                 });
             }
@@ -113,21 +184,31 @@
         initSearch();
     }
 
-    if (form) {
-        form.addEventListener("submit", async e => {
+    if (form && btnSubmit) {
+        btnSubmit.addEventListener("click", e => {
             e.preventDefault();
-            errors.clearAllErrors?.(form);
-            try {
-                const response = await dataSender.sendForm(form);
-                if (response.ok) logMessage("Formulardaten erfolgreich gesendet.");
-                else {
-                    errors.setGlobalError(response.message || "Unbekannter Fehler");
-                    logMessage("Fehler beim Senden des Formulars.");
-                }
-            } catch (err) {
-                errors.setGlobalError("Fehler: " + err.message);
-                logMessage("Formular-Exception: " + err.message);
-            }
+
+            const moduleName = "fm"; 
+            const functionName = "write_config"; 
+
+            const configName = form.dataset.config || selectedFileField.value;
+
+            const items = {
+                booleanOption: document.getElementById("boolean-option")?.checked,
+                serverName: document.getElementById("string-field")?.value,
+                port: parseInt(document.getElementById("number-picker")?.value, 10),
+                validUntil: document.getElementById("date-picker")?.value
+            };
+
+            const requestData = {
+                auth: localStorage.getItem("authToken"),
+                service: "defaultService", 
+                config: configName,
+                items: items,
+                validate: true
+            };
+
+            sendRequest(moduleName, functionName, requestData);
         });
     }
 
@@ -135,22 +216,7 @@
         btnCancel.addEventListener("click", () => {
             logMessage("Aktion abbrechen...");
             form?.reset();
-            errors.clearAllErrors?.(form);
             logMessage("Aktion abgebrochen.");
-        });
-    }
-
-    if (form && btnSubmit) {
-        btnSubmit.addEventListener("click", async e => {
-            e.preventDefault();
-            logMessage("Absenden...");
-            try {
-                const response = await dataSender.sendForm(form);
-                if (response.ok) logMessage("Formulardaten erfolgreich gesendet.");
-                else logMessage("Fehler beim Senden des Formulars.");
-            } catch (err) {
-                logMessage("Fehler beim Senden: " + err.message);
-            }
         });
     }
 
@@ -179,7 +245,11 @@
 
         sendBtn.addEventListener("click", () => {
             const message = messageInput.value;
-            dataSender.sendRaw(message);
+            sendRequest("fm", "custom_message", {
+                auth: localStorage.getItem("authToken"),
+                service: "defaultService", 
+                raw: message
+            });
         });
     }
 
@@ -189,8 +259,15 @@
     const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary")).find(b => b.textContent.includes("Bearbeiten"));
 
     if (btnNewFile) btnNewFile.addEventListener("click", () => {
-        dataSender.sendAction("newFile");
-        logMessage("Neue Datei Aktion gesendet.");
+        const newConfigName = "newConfig.json";
+
+        sendRequest("fm", "new_config", {
+            auth: localStorage.getItem("authToken"),
+            service: "defaultService", 
+            config: newConfigName
+        });
+
+        logMessage(`Neue Konfigurationsdatei angelegt: ${newConfigName}`);
     });
 
     if (btnUpload) btnUpload.addEventListener("click", () => {
@@ -201,7 +278,15 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = () => {
-                dataSender.sendRaw({ action: "uploadFile", filename: file.name, content: reader.result });
+                const content = reader.result;
+
+                sendRequest("fm", "upload_config", {
+                    auth: localStorage.getItem("authToken"),
+                    service: "defaultService",      
+                    config: file.name,
+                    content: content
+                });
+
                 logMessage(`Datei hochgeladen: ${file.name}`);
 
                 const ul = dataTree.querySelector("ul.file-list");
