@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const user = document.getElementById("user").value.trim();
         const security = document.getElementById("security").value.trim();
+        const grantType = document.getElementById("grantType")?.value || "password"; 
 
         // test
         if (user === "admin" && security === "admin") {
@@ -61,10 +62,12 @@ document.addEventListener("DOMContentLoaded", () => {
             module: "auth",
             function: "login",
             data: {
-                user: user,
-                security: security
+                user: user,           
+                security: security,   
+                grant_type: grantType 
             }
         };
+
 
         dataSender.sendRaw(request);
     });
