@@ -17,7 +17,7 @@
 
             items.forEach(li => {
                 li.style.display = "";
-                li.innerHTML = li.textContent; 
+                li.innerHTML = li.textContent;
 
                 if (query && !li.textContent.toLowerCase().includes(query)) {
                     li.style.display = "none"; btnSubmit
@@ -55,18 +55,31 @@
     }
 
     if (btnCancel) {
-        logMessage("Formular zurückgesetzt.");
         btnCancel.addEventListener("click", () => {
+            logMessage("Aktion abrechen...");
             form?.reset();
             errors.clearAllErrors?.(form);
+            logMessage("Aktion abgebrochen.");
         });
     }
 
-    if (btnSubmit) {
-        logMessage("Vorgenommen.");
-        btnSubmit.addEventListener("click", () => {
-            form?.reset();
-            errors.clearAllErrors?.(form);
+    if (form && btnSubmit) {
+        btnSubmit.addEventListener("click", async (e) => {
+            logMessage("Absenden...");
+
+            e.preventDefault(); 
+
+            try {
+                const response = await dataSender.sendForm(form);
+                if (response.ok) {
+                    logMessage("Formulardaten erfolgreich gesendet.");
+                } else {
+                    logMessage("Fehler beim Senden des Formulars.");
+                }
+                logMessage("Abgesendet");
+            } catch (err) {
+                logMessage("Fehler beim Senden: " + err.message);
+            }
         });
     }
 

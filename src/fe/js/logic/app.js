@@ -1,6 +1,5 @@
-// Helper functions for user management
 function getRolePermissions(role) {
-    switch(role) {
+    switch (role) {
         case "Administrator":
             return { create: true, read: true, update: true, delete: true };
         case "Editor":
@@ -13,7 +12,7 @@ function getRolePermissions(role) {
 }
 
 function getRoleBadgeClass(role) {
-    switch(role) {
+    switch (role) {
         case "Administrator":
             return "badge-danger";
         case "Editor":
@@ -28,11 +27,11 @@ function getRoleBadgeClass(role) {
 function createUser(username, role) {
     const userTable = document.getElementById("user-table");
     if (!userTable) return;
-    
+
     const newRow = userTable.insertRow();
     const permissions = getRolePermissions(role);
     const badgeClass = getRoleBadgeClass(role);
-    
+
     newRow.innerHTML = `
         <td><strong>${username}</strong></td>
         <td><span class="badge ${badgeClass}">${role}</span></td>
@@ -45,6 +44,12 @@ function createUser(username, role) {
           <button type="button" class="delete-user">🗑️</button>
         </td>
     `;
+
+    // TODO BACKEND SAVE CHANGES TO DB
+    dataSender.sendRaw({
+        action: "createUser",
+        user: { username, role, permissions }
+    });
 }
 
 function editUser(row, username, role) {
@@ -65,17 +70,30 @@ function editUser(row, username, role) {
           <button type="button" class="delete-user">🗑️</button>
         </td>
     `;
+
+    // TODO BACKEND SAVE CHANGES TO DB
+    dataSender.sendRaw({
+        action: "editUser",
+        user: { username, role, permissions }
+    });
+}
+function deleteUser(row, username) {
+    row.remove();
+
+    // TODO BACKEND SAVE CHANGES TO DB
+    dataSender.sendRaw({
+        action: "deleteUser",
+        user: { username }
+    });
 }
 
 function createUserModal() {
-    // Create modal backdrop
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
-    
-    // Create modal content
+
     const modal = document.createElement('div');
     modal.className = 'modal';
-    
+
     modal.innerHTML = `
         <div class="modal-header">
             <h3 class="modal-title">Neuen Benutzer hinzufügen</h3>
@@ -99,58 +117,52 @@ function createUserModal() {
             <button type="button" id="create-user" class="btn btn-success">Erstellen</button>
         </div>
     `;
-    
+
     backdrop.appendChild(modal);
-    
-    // Add event listeners
+
     const usernameInput = modal.querySelector('#username-input');
     const roleSelect = modal.querySelector('#role-select');
     const cancelBtn = modal.querySelector('#cancel-user');
     const createBtn = modal.querySelector('#create-user');
-    
-    // Focus on username input
+
     setTimeout(() => usernameInput.focus(), 100);
-    
-    // Cancel button
+
     cancelBtn.addEventListener('click', () => {
         document.body.removeChild(backdrop);
     });
-    
-    // Create button
+
     createBtn.addEventListener('click', () => {
         const username = usernameInput.value.trim();
         const role = roleSelect.value;
-        
+
         if (!username) {
             alert('Bitte geben Sie einen Benutzernamen ein.');
             usernameInput.focus();
             return;
         }
-        
+
         createUser(username, role);
         document.body.removeChild(backdrop);
     });
-    
-    // Enter key to create
+
     usernameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             createBtn.click();
         }
     });
-    
+
     roleSelect.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             createBtn.click();
         }
     });
-    
-    // Close on backdrop click
+
     backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
             document.body.removeChild(backdrop);
         }
     });
-    
+
     return backdrop;
 }
 
@@ -223,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const userTable = document.getElementById("user-table");
     if (addUserBtn && userTable) {
         addUserBtn.addEventListener("click", () => {
-            // Create modal for user input
             const modal = createUserModal();
             document.body.appendChild(modal);
         });
@@ -244,14 +255,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (e.target.classList.contains("delete-user")) {
                 const row = e.target.closest("tr");
-                if (confirm("Benutzer wirklich loeschen?")) {
-                    row.remove();
+                const currentUsername = row.cells[0].innerText.trim();
+                if (confirm("Benutzer wirklich löschen?")) {
+                    deleteUser(row, currentUsername);
                 }
             }
         });
     }
 
-    // Template button functionality
     const templateButtons = document.querySelectorAll('button[data-role]');
     templateButtons.forEach(button => {
         button.addEventListener('click', () => {

@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const dataSender = new DataSender();  
     const form = document.getElementById("loginForm");
     const hint = document.getElementById("loginHint");
 
@@ -47,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
             hint.textContent = "Login erfolgreich. Weiterleitung...";
             hint.className = "hint ok";
             setTimeout(() => {
-                window.location.href = "../view/main.html";
+                window.location.href = "../main.html";
             }, 500);
             return;
         }
@@ -58,21 +57,16 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const items = [
-            { name: "user", value: user, type: "string", children: [], meta: {} },
-            { name: "security", value: security, type: "string", children: [], meta: {} }
-        ];
-
         const request = {
-            module: form.dataset.module || "auth",
-            function: form.dataset.function || "login",
+            module: "auth",
+            function: "login",
             data: {
-                config: form.dataset.config || "myConfig",
-                uid: crypto.randomUUID(),
-                Items: items
+                user: user,
+                security: security
             }
         };
 
         dataSender.sendRaw(request);
     });
+
 });

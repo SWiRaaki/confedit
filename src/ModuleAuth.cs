@@ -47,24 +47,59 @@ internal class Jwt {
 	internal string Secret { get; set; } = "";
 
 	internal static string ToBase64( string text ) {
-        return Base64Url.EncodeToString( Encoding.UTF8.GetBytes( text ) );
-    }
+		return Base64Url.EncodeToString( Encoding.UTF8.GetBytes( text ) );
+	}
 
 	internal static string FromBase64( string text ) {
 		var b64 = Encoding.UTF8.GetBytes( text );
-        return Encoding.UTF8.GetString( Base64Url.DecodeFromUtf8( b64 ) );
-    }
+		return Encoding.UTF8.GetString( Base64Url.DecodeFromUtf8( b64 ) );
+	}
 
-    internal static string ComputeSignatureSegment( string headerb64, string payloadb64 )
+	internal static string ComputeSignatureSegment( string headerb64, string payloadb64 )
     {
         var key = Encoding.UTF8.GetBytes( Program.Config.Secret );
         var data = Encoding.ASCII.GetBytes( $"{headerb64}.{payloadb64}" );
         using var hmac = new HMACSHA256( key );
         var sig = hmac.ComputeHash( data );
-		return Base64Url.EncodeToString( sig );
+        return Base64Url.EncodeToString( sig );
     }
 
-    public override string ToString() {
+	internal bool IsExpired() {
+		var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return now > Payload.ExpirationTime;
+	}
+
+	internal bool IsAuthorized( string scope_namespace, string scope, string access ) {
+		try {
+			string script = File.ReadAllText( "sql/get_effective_auth.sql" );
+			DataTable result = Program.Database.Select( script, ( "@user_uuid", Payload.JWTID ) );
+
+			foreach( DataRow row in result.Rows ) {
+				string permissions = row["permissions"] as string ?? "";
+				string scope_ns = row["scope_ns"] as string ?? "";
+				string scope_name = row["scope_name"] as string ?? "";
+
+				if ( !permissions.Contains( access ) ) {
+					continue;
+				}
+				if ( scope_ns != "global" && scope_ns != scope_namespace ) {
+					continue;
+				}
+				if ( scope_name != "any" && scope_name != scope ) {
+					continue;
+				}
+
+				return true;
+			}
+		}
+		catch( Exception e ) {
+			Console.WriteLine( $"Authorization failed: {e.Message}" );
+		}
+
+		return false;
+	}
+
+	public override string ToString() {
 		var headerjson = JsonConvert.SerializeObject( Header );
 		var payloadjson = JsonConvert.SerializeObject( Payload );
 		var headerb64 = ToBase64( headerjson );
@@ -93,10 +128,10 @@ internal class Jwt {
 }
 
 internal class AuthLoginRequestData {
-	[JsonProperty("user")]
+	[JsonProperty("user", Required = Required.Always)]
 	internal string User { get; set; } = "";
 
-	[JsonProperty("security")]
+	[JsonProperty("security", Required = Required.Always)]
 	internal string Security { get; set; } = "";
 }
 
@@ -123,9 +158,9 @@ internal class ModuleAuth : Module {
 		if ( request.Module != Name || request.Function != "login" ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -3, $"{request.Module}.{request.Function} mismatched signature {Name}.login" )
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.login" )
 				}
 			};
 			return false;
@@ -137,9 +172,9 @@ internal class ModuleAuth : Module {
 		if ( reqdata == null ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -4, $"Failed authentification: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData, $"Failed authentification: Invalid request data provided!" )
 				}
 			};
 			return false;
@@ -152,9 +187,9 @@ internal class ModuleAuth : Module {
 		if ( user.Rows.Count == 0 ) {
 			response = new Response() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Authentification,
 				Errors = {
-					new Error( -5, $"Failed authentification: User not found!" )
+					new Error( AuthentificationError.UserNotFound, $"Failed authentification: User not found!" )
 				}
 			};
 			return false;
@@ -165,9 +200,9 @@ internal class ModuleAuth : Module {
 		if ( row["security"].ToString() != reqdata.Security ) {
 			response = new() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Authentification,
 				Errors = {
-					new Error( -6, $"Failed authentification: invalid security!" )
+					new Error( AuthentificationError.InvalidSecurity, $"Failed authentification: Invalid security!" )
 				}
 			};
 			return false;
@@ -201,14 +236,10 @@ internal class ModuleAuth : Module {
 
 		response = new() {
 			Module = Name,
-			Code = 0,
+			Code = RequestError.None,
 			Data = JObject.FromObject( respdata )
 		};
 
-		return true;
-	}
-
-	internal bool RegisterUser( object caller, Request request, Response response ) {
 		return true;
 	}
 }

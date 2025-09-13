@@ -5,15 +5,15 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 internal class Config {
-	[JsonProperty("service")]
+	[JsonProperty("service", Required = Required.Always)]
 	internal string Service { get; set; } = "";
 
-	[JsonProperty("config")]
+	[JsonProperty("config", Required = Required.Always)]
 	internal string Configuration { get; set; } = "";
 }
 
 internal class FmGetListRequestData {
-	[JsonProperty("auth")]
+	[JsonProperty("auth", Required = Required.Always)]
 	internal string Auth { get; set; } = "";
 }
 
@@ -23,27 +23,27 @@ internal class FmGetListResponseData {
 }
 
 internal class FmGetConfigRequestData {
-	[JsonProperty("auth")]
+	[JsonProperty("auth", Required = Required.Always)]
 	internal string Auth { get; set; } = "";
 
-	[JsonProperty("service")]
+	[JsonProperty("service", Required = Required.Always)]
 	internal string Service { get; set; } = "";
 
-	[JsonProperty("config")]
+	[JsonProperty("config", Required = Required.Always)]
 	internal string Configuration { get; set; } = "";
 }
 
 internal class FmWriteConfigRequestData {
-	[JsonProperty("auth")]
+	[JsonProperty("auth", Required = Required.Always)]
 	internal string Auth { get; set; } = "";
 
-	[JsonProperty("service")]
+	[JsonProperty("service", Required = Required.Always)]
 	internal string Service { get; set; } = "";
 
-	[JsonProperty("config")]
+	[JsonProperty("config", Required = Required.Always)]
 	internal string Configuration { get; set; } = "";
 
-	[JsonProperty("uid")]
+	[JsonProperty("uid", Required = Required.Always)]
 	internal string UID { get; set; } = "";
 }
 
@@ -60,9 +60,9 @@ internal class ModuleFm : Module {
 		if ( request.Module != Name || request.Function != "get_list" ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -3, $"{request.Module}.{request.Function} mismatched signature {Name}.get_list" )
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.get_list" )
 				}
 			};
 			return false;
@@ -74,9 +74,9 @@ internal class ModuleFm : Module {
 		if ( reqdata == null ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -4, $"Failed retrieving configuration: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided!" )
 				}
 			};
 			return false;
@@ -94,7 +94,7 @@ internal class ModuleFm : Module {
 
 			response = new() {
 				Module = Name,
-				Code = 0,
+				Code = RequestError.None,
 				Data = JObject.FromObject( respdata )
 			};
 
@@ -103,9 +103,9 @@ internal class ModuleFm : Module {
 		catch( Exception e ) {
 			response = new Response() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Unknown,
 				Errors = {
-					new Error( -10, $"Failed to retrieve list: {e.Message}" )
+					new Error( -1, $"Failed to retrieve list: {e.Message}" )
 				}
 			};
 		}
@@ -116,9 +116,9 @@ internal class ModuleFm : Module {
 		if ( request.Module != Name || request.Function != "get_config" ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -3, $"{request.Module}.{request.Function} mismatched signature {Name}.get_config" )
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.get_config" )
 				}
 			};
 			return false;
@@ -129,9 +129,9 @@ internal class ModuleFm : Module {
 		if ( reqdata == null ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -4, $"Failed retrieving configuration: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData, $"Failed retrieving configuration: Invalid request data provided!" )
 				}
 			};
 			return false;
@@ -143,20 +143,30 @@ internal class ModuleFm : Module {
 		if ( provider == null ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -11, $"No provider known to read {extension}-configurations" )
+					new Error( ValidationError.ProviderNotFound, $"No provider known to read {extension}-configurations" )
 				}
 			};
 		}
 
 		var token = Jwt.FromString( reqdata.Auth );
-		if ( !ModuleAdmin.IsAuthorized( token.Payload.JWTID, reqdata.Service, reqdata.Configuration, "Read" ) ) {
+		if ( token.IsExpired() ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Authorization,
 				Errors = {
-					new Error( -9, $"Not authorized to read configuration {reqdata.Service}:{reqdata.Configuration}" )
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( reqdata.Service, reqdata.Configuration, "Read" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to read configuration {reqdata.Service}:{reqdata.Configuration}" )
 				}
 			};
 			return false;
@@ -176,9 +186,9 @@ internal class ModuleFm : Module {
 			if ( loaded.Code != 0 ) {
 				response = new Response() {
 					Module = Name,
-					Code = -3,
+					Code = RequestError.Provider,
 					Errors = {
-						new Error( -13, $"Failed to read configuration: {loaded?.Message}" )
+						new Error( ProviderError.FileLoadError, $"Failed to read configuration: [{loaded?.Code}]{loaded?.Message}" )
 					}
 				};
 				return false;
@@ -188,7 +198,7 @@ internal class ModuleFm : Module {
 
 			response = new Response() {
 				Module = Name,
-				Code = 0,
+				Code = RequestError.None,
 				Data = JObject.FromObject( loaded.Data ) ?? new JObject()
 			};
 
@@ -197,9 +207,9 @@ internal class ModuleFm : Module {
 		catch ( Exception e ) {
 			response = new Response() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Unknown,
 				Errors = {
-					new Error( -12, $"Failed to read configuration: {e.Message}" )
+					new Error( -1, $"Failed to read configuration: {e.Message}" )
 				}
 			};
 			return false;
@@ -210,9 +220,9 @@ internal class ModuleFm : Module {
 		if ( request.Module != Name || request.Function != "write_config" ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -3, $"{request.Module}.{request.Function} mismatched signature {Name}.write_config" )
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.write_config" )
 				}
 			};
 			return false;
@@ -223,9 +233,9 @@ internal class ModuleFm : Module {
 		if ( reqdata == null ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -4, $"Failed retrieving list: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData, $"Failed retrieving list: Invalid request data provided!" )
 				}
 			};
 			return false;
@@ -237,20 +247,30 @@ internal class ModuleFm : Module {
 		if ( provider == null ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -11, $"No provider known to write {extension}-configurations" )
+					new Error( ValidationError.ProviderNotFound, $"No provider known to write {extension}-configurations" )
 				}
 			};
 		}
 
 		var token = Jwt.FromString( reqdata.Auth );
-		if ( !ModuleAdmin.IsAuthorized( token.Payload.JWTID, reqdata.Service, reqdata.Configuration, "Write" ) ) {
+		if ( token.IsExpired() ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Authorization,
 				Errors = {
-					new Error( -9, $"Not authorized to read configuration {reqdata.Service}:{reqdata.Configuration}" )
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( reqdata.Service, reqdata.Configuration, "Write" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to write configuration {reqdata.Service}:{reqdata.Configuration}" )
 				}
 			};
 			return false;
@@ -271,9 +291,9 @@ internal class ModuleFm : Module {
 			if ( saved.Code != 0 ) {
 				response = new Response() {
 					Module = Name,
-					Code = -3,
+					Code = RequestError.Provider,
 					Errors = {
-						new Error( -13, $"Failed to write configuration: {saved.Message}" )
+						new Error( ProviderError.FileSaveError, $"Failed to write configuration: [{saved.Code}]{saved.Message}" )
 					}
 				};
 				return false;
@@ -281,7 +301,7 @@ internal class ModuleFm : Module {
 
 			response = new Response() {
 				Module = Name,
-				Code = 0
+				Code = RequestError.None
 			};
 
 			return true;
@@ -289,9 +309,9 @@ internal class ModuleFm : Module {
 		catch ( Exception e ) {
 			response = new Response() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Unknown,
 				Errors = {
-					new Error( -12, $"Failed to read configuration: {e.Message}" )
+					new Error( -1, $"Failed to read configuration: {e.Message}" )
 				}
 			};
 			return false;
