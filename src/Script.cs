@@ -165,7 +165,7 @@ internal abstract class Script {
 		}
 	}
 
-	internal abstract Result RunScript( string file, SqliteTransaction transaction, params (string key, object value)[] parameters );
+	internal abstract Result RunScript( string file, SqliteTransaction transaction, Dictionary<string, string>? placeholder = null, params (string key, object value)[] parameters );
 
-	internal abstract Result<DataTable> RunScript( string file, params (string key, object value)[] parameters );
+	internal abstract Result<DataTable> RunScript( string file, Dictionary<string, string>? placeholder, params (string key, object value)[] parameters );
 }

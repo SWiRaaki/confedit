@@ -53,7 +53,12 @@ internal class TomlConfigProvider: IConfigProvider {
 			var root = new TomlTable();
 			foreach( var item in data.Items ) {
 				var element = BuildElement( item );
-				root[item.Name] = element.Token;
+				if ( element.Token == null ) {
+					continue;
+				}
+				else {
+					root[item.Name] = element.Token;
+				}
 
 				if ( element.Meta != null ) {
 					root[$"%{item.Name}"] = element.Meta;
@@ -126,15 +131,15 @@ internal class TomlConfigProvider: IConfigProvider {
 			break;
 		case sbyte or byte or short or ushort or int or uint or long:
 			node.Type = "integer";
-			node.Value = value.ToString();
+			node.Value = value.ToString()!;
 			break;
 		case ulong:
 			node.Type = "unsigned";
-			node.Value = value.ToString();
+			node.Value = value.ToString()!;
 			break;
 		case float or double or decimal:
 			node.Type = "float";
-			node.Value = value.ToString();
+			node.Value = value.ToString()!;
 			break;
 		case DateTime dt:
 			node.Type = "datetime";
@@ -146,15 +151,15 @@ internal class TomlConfigProvider: IConfigProvider {
 			break;
 		default:
 			node.Type = "string";
-			node.Value = value.ToString();
+			node.Value = value.ToString()!;
 			break;
 		}
 
 		return node;
 	}
 
-	internal (object Token, TomlTable? Meta) BuildElement( ConfigNode node ) {
-		(object Token, TomlTable? Meta) result = new();
+	internal (object? Token, TomlTable? Meta) BuildElement( ConfigNode node ) {
+		(object? Token, TomlTable? Meta) result = new();
 
 		if ( node.Meta.Count > 0 ) {
 			result.Meta = new TomlTable();
@@ -168,7 +173,12 @@ internal class TomlConfigProvider: IConfigProvider {
 			var obj = new TomlTable();
 			foreach( var child in node.Children ) {
 				var element = BuildElement( child );
-				obj[child.Name] = element.Token;
+				if ( element.Token == null ) {
+					continue;
+				}
+				else {
+					obj[child.Name] = element.Token;
+				}
 				if ( element.Meta != null ) {
 					obj[$"%{child.Name}"] = element.Meta;
 				}

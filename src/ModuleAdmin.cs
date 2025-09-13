@@ -64,14 +64,14 @@ internal class AdminUpdateUserRequestData {
 	[JsonProperty("uid", Required = Required.Always)]
 	internal string UID { get; set; } = "";
 
-	[JsonProperty("name", Required = Required.Always)]
-	internal string Name { get; set; } = "";
+	[JsonProperty("name")]
+	internal string? Name { get; set; } = null;
 
-	[JsonProperty("abbreviation", Required = Required.Always)]
-	internal string Abbreviation { get; set; } = "";
+	[JsonProperty("abbreviation")]
+	internal string? Abbreviation { get; set; } = null;
 
-	[JsonProperty("security", Required = Required.Always)]
-	internal string Security { get; set; } = "";
+	[JsonProperty("security")]
+	internal string? Security { get; set; } = null;
 }
 
 internal class AdminUpdateUserResponseData {
@@ -114,7 +114,6 @@ internal class ModuleAdmin : Module {
 		Function.Add( "create_user", CreateUser );
 		Function.Add( "update_user", UpdateUser );
 		Function.Add( "delete_user", DeleteUser );
-		Function.Add( "create_group", CreateGroup );
 	}
 
 	internal override string Name { get; } = "admin";
@@ -168,7 +167,7 @@ internal class ModuleAdmin : Module {
 		}
 
 		try {
-			var selected = Program.Script.RunScript( "sql/admin_list_users.sql" );
+			var selected = Program.Script.RunScript( "sql/admin_list_users.sql", null );
 			if ( !selected ) {
 				response = new Response() {
 					Module = Name,
@@ -255,6 +254,7 @@ internal class ModuleAdmin : Module {
 		try {
 			var selected = Program.Script.RunScript(
 				"sql/admin_get_user.sql",
+				null,
 				("@uuid", reqdata.UID)
 			);
 
@@ -358,6 +358,7 @@ internal class ModuleAdmin : Module {
 		try {
 			var inserted = Program.Script.RunScript(
 				"sql/admin_create_user.sql",
+				null,
 				("@name", reqdata.Name),
 				("@abbreviation", reqdata.Abbreviation),
 				("@security", reqdata.Security)
@@ -449,13 +450,25 @@ internal class ModuleAdmin : Module {
 
 		var transaction = Program.Database.BeginTransaction();
 		try {
+			var setlist = new List<string>();
+			if ( !string.IsNullOrWhiteSpace( reqdata.Name ) ) {
+				setlist.Add( "name = @name" );
+			}
+			if ( !string.IsNullOrWhiteSpace( reqdata.Abbreviation ) ) {
+				setlist.Add( "abbreviation = @abbreviation" );
+			}
+			if ( !string.IsNullOrWhiteSpace( reqdata.Security ) ) {
+				setlist.Add( "security = @security" );
+			}
+			var placeholder = new Dictionary<string, string>();
+			placeholder.Add( "SETLIST", string.Join( ", ", setlist ) );
 			var updated = Program.Script.RunScript(
 					"admin_update_user.sql",
-					transaction,
+					placeholder,
 					("@uuid", reqdata.UID),
-					("@name", reqdata.Name),
-					("@abbreviation", reqdata.Abbreviation),
-					("@security", reqdata.Security)
+					("@name", reqdata.Name ?? ""),
+					("@abbreviation", reqdata.Abbreviation ?? ""),
+					("@security", reqdata.Security ?? "")
 			);
 			if ( !updated ) {
 				transaction.Rollback();
@@ -471,9 +484,9 @@ internal class ModuleAdmin : Module {
 
 			transaction.Commit();
 			respdata = new() {
-				UID = reqdata.UID,
-				Name = reqdata.Name,
-				Abbreviation = reqdata.Abbreviation
+				UID = (string)updated.Data!.Rows[0]["uuid"],
+				Name = (string)updated.Data!.Rows[0]["name"],
+				Abbreviation = (string)updated.Data!.Rows[0]["abbreviation"]
 			};
 
 			response = new Response() {
@@ -543,15 +556,13 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		var transaction = Program.Database.BeginTransaction();
 		try {
 			var deleted = Program.Script.RunScript(
 					"admin_delete_user.sql",
-					transaction,
+					null,
 					("@uuid", reqdata.UID)
 			);
 			if ( !deleted ) {
-				transaction.Rollback();
 				response = new Response() {
 					Module = Name,
 					Code = RequestError.Module,
@@ -562,7 +573,6 @@ internal class ModuleAdmin : Module {
 				return false;
 			}
 
-			transaction.Commit();
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.None
@@ -570,7 +580,6 @@ internal class ModuleAdmin : Module {
 			return true;
 		}
 		catch ( Exception e ) {
-			transaction.Rollback();
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Unknown,
