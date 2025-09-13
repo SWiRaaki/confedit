@@ -31,13 +31,28 @@
                             <input type="search" id="datei-suche" class="form-control" placeholder="Datei suchen...">
                         </div>
                         <div id="data-tree">
-                            <h3>Mockup</h3>
-                            <ul>
-                                <li>📄 config_json.json</li>
-                                <li>📄 config.yaml</li>
-                                <li>📄 config.xml</li>
-                                <li>📄 config.ini</li>
-                                <li>📄 config.toml</li>
+                            <h3>Dateien</h3>
+                            <ul class="file-list">
+                                <li>
+                                    <button class="file-item btn btn-light" data-filename="config_json.json">📄 config_json.json</button>
+                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
+                                </li>
+                                <li>
+                                    <button class="file-item btn btn-light" data-filename="config.yaml">📄 config.yaml</button>
+                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
+                                </li>
+                                <li>
+                                    <button class="file-item btn btn-light" data-filename="config.xml">📄 config.xml</button>
+                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
+                                </li>
+                                <li>
+                                    <button class="file-item btn btn-light" data-filename="config.ini">📄 config.ini</button>
+                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
+                                </li>
+                                <li>
+                                    <button class="file-item btn btn-light" data-filename="config.toml">📄 config.toml</button>
+                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -61,6 +76,11 @@
                                 <div class="form-group">
                                     <label for="boolean-option">Feature aktivieren:</label>
                                     <input type="checkbox" id="boolean-option" name="boolean-option">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="selected-file">Ausgewählte Datei:</label>
+                                    <input type="text" id="selected-file" name="selected-file" class="form-control" readonly placeholder="">
                                 </div>
 
                                 <div class="form-group">
