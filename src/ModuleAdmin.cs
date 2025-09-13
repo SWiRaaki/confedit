@@ -99,7 +99,7 @@ internal class AdminListGroupsRequestData {
 }
 
 internal class AdminListGroupsResponseData {
-	[JsonProperty("users")]
+	[JsonProperty("groups")]
 	internal List<(string UID, string Name, string Abbreviation, string Description)> Groups { get; set; } = new();
 }
 
@@ -252,6 +252,10 @@ internal class ModuleAdmin : Module {
 		Function.Add( "create_group", CreateGroup );
 		Function.Add( "update_group", UpdateGroup );
 		Function.Add( "delete_group", DeleteGroup );
+		Function.Add( "list_user_groups", ListUserGroups );
+		Function.Add( "list_group_users", ListGroupUsers );
+		Function.Add( "add_user_to_group", AddUserToGroup );
+		Function.Add( "remove_user_from_group", RemoveUserFromGroup );
 	}
 
 	internal override string Name { get; } = "admin";
@@ -1462,7 +1466,7 @@ internal class ModuleAdmin : Module {
 		}
 	}
 
-	internal bool RemoveUserToGroup( object caller, Request request, out Response response ) {
+	internal bool RemoveUserFromGroup( object caller, Request request, out Response response ) {
 		if ( request.Module != Name || request.Function != "remove_user_from_group" ) {
 			response = new Response() {
 				Module = Name,
