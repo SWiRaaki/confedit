@@ -118,6 +118,7 @@ main {
     max-width: 1200px;
     margin: var(--spacing-xl) auto;
     padding: 0 var(--spacing-lg);
+    overflow-x: hidden;
 }
 
 /* Typography */
@@ -662,7 +663,10 @@ li {
 .d-block { display: block !important; }
 .d-inline { display: inline !important; }
 .d-inline-block { display: inline-block !important; }
-.d-flex { display: flex !important; }
+.d-flex { 
+    display: flex !important; 
+    min-width: 0;
+}
 
 .justify-content-start { justify-content: flex-start !important; }
 .justify-content-end { justify-content: flex-end !important; }
@@ -735,6 +739,8 @@ li {
     margin-top: var(--spacing-lg);
     background-color: var(--bg-secondary);
     border-radius: var(--border-radius);
+    overflow: hidden;
+    min-width: 0;
 }
 
 .ws-panel pre {
@@ -743,6 +749,25 @@ li {
     background: var(--bg-primary);
     padding: var(--spacing-md);
     border-radius: var(--border-radius-sm);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* Log element styling */
+#log {
+    max-width: 100%;
+    width: 100%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-x: auto;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    height: 200px;
+    box-sizing: border-box;
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.875rem;
     line-height: 1.4;

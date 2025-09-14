@@ -70,8 +70,6 @@
                     dataSender.sendRaw(loginRequest);
                 });
             }
-            //auth benutzer
-            dataSender.sendRaw(loginRequest);
             //sende req
             const fmRequest = {
                 module: "fm",
