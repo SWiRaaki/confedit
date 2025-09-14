@@ -205,6 +205,11 @@ internal class ModuleAuth : Module {
 				Code = RequestError.None,
 				Data = JObject.FromObject( respdata )
 			};
+
+			if ( caller is Client ) {
+				var client = (Client)caller;
+				client.ID = new( jtoken.Payload.JWTID );
+			}
 			return true;
 		}
 		else if ( reqdata.GrantType != "password" ) {
@@ -276,7 +281,7 @@ internal class ModuleAuth : Module {
 		};
 
 		if ( caller is Client ) {
-			Client client = (caller as Client)!;
+			var client = (Client)caller;
 			client.ID = new( row["uuid"].ToString() ?? "" );
 		}
 
