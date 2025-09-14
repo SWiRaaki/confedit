@@ -15,7 +15,8 @@
     const serviceName = window.currentService || "defaultService";
     let selectedFileName = "test";
 
-    dataSender.connectWS("ws://localhost:8080");
+    //dataSender.connectWS("ws://localhost:8080");
+	service.authenticate();
 
     function logMessage(msg) {
         if (!log) return;
@@ -23,53 +24,15 @@
         log.scrollTop = log.scrollHeight;
     }
 
-        //WebSocket verbunden.
-        //WebSocket ist bereits verbunden.
-        //    Gesendet: { "module": "auth", "function": "login", "data": { "user": "root", "security": "admin?", "grant_type": "password" } }
-        //    Gesendet: { "module": "fm", "function": "write_config", "data": { "auth": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjZS5hdXRoIiwic3ViIjoicm9vdCIsImF1ZCI6ImNlIiwiZXhwIjoxNzU3ODQzMDUyLCJuYmYiOjE3NTc4Mzk0NTIsImlhdCI6MTc1NzgzOTQ1MiwianRpIjoiZmQ5NzU5NzViZDMxNDRlNWIyODgwNDdkMmQ3NDM0YzUifQ.W6ch-SuXUAHwx4tGNQ2oF-85ykWYAqjxuxvUh7mX6OU", "service": "defaultService", "config": "myConfig" } }
-        //Konfigurationsdatei "myConfig" wurde gespeichert.
-        //    Server - Antwort(JSON): { "module": "auth", "code": 0, "data": { "auth": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjZS5hdXRoIiwic3ViIjoicm9vdCIsImF1ZCI6ImNlIiwiZXhwIjoxNzU3ODQ0NjA0LCJuYmYiOjE3NTc4NDEwMDQsImlhdCI6MTc1Nzg0MTAwNCwianRpIjoiZmQ5NzU5NzViZDMxNDRlNWIyODgwNDdkMmQ3NDM0YzUifQ.2Upxc3IxXDrQOepf-Age1teaCBtBHJ20sSr2vPCvQOY" }, "errors": [] }
-        //WebSocket geschlossen.
     async function sendRequest(functionName, extraData = {}) {
-        dataSender.connectWS("ws://localhost:8080");
-        if (!dataSender.ws || dataSender.ws.readyState !== WebSocket.OPEN) {
+        //dataSender.connectWS("ws://localhost:8080");
+        if (!service.ws || service.ws.readyState !== WebSocket.OPEN) {
             console.warn("❌ WebSocket nicht verbunden, Request abgebrochen.");
             return;
         }
 
+		let token = localStorage.getItem( "authToken" );
         try {
-            let token = localStorage.getItem("authToken");
-            //login data oder cookies oder wie wird es gemacht
-            const loginRequest = {
-                module: "auth",
-                function: "login",
-                data: {
-                    user: "root",
-                    security: "admin?",
-                    grant_type: "password"
-                }
-            };
-
-            if (!token) {
-                token = await new Promise((resolve, reject) => {
-                    const handler = (msg) => {
-                        try {
-                            const resp = JSON.parse(msg.data);
-                            if (resp.code === 0 && resp.data?.auth) {
-                                dataSender.ws.removeEventListener("message", handler);
-                                localStorage.setItem("authToken", resp.data.auth);
-                                resolve(resp.data.auth);
-                            } else {
-                                reject(new Error(resp.errors?.[0]?.msg || "Login fehlgeschlagen"));
-                            }
-                        } catch (err) {
-                            reject(err);
-                        }
-                    };
-                    dataSender.ws.addEventListener("message", handler);
-                    dataSender.sendRaw(loginRequest);
-                });
-            }
             //sende req
             const fmRequest = {
                 module: "fm",
@@ -81,8 +44,8 @@
                 }
             };
 
-            dataSender.sendRaw(fmRequest);
-            console.log("➡️ FM Request gesendet:", fmRequest);
+            //dataSender.sendRaw(fmRequest);
+			let fmResponse = service.sendRequest( fmRequest );
 
         } catch (err) {
             console.error("❌ Fehler beim Senden des Requests:", err);
