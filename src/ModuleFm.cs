@@ -173,13 +173,48 @@ internal class ModuleFm : Module {
 		}
 
 		try {
-			var result = Program.Database.Select( $"select name, uuid from std_scope where namespace = '{reqdata.Service}' and name LIKE '://%'" );
-			string path = "";
-			if ( result.Rows.Count == 0) {
-				path = Path.Combine( Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location )!, reqdata.Service, reqdata.Configuration );
+			var path = "";
+			var loc  = "";
+			var result = Program.Script.RunScript(
+				"sql/fm_get_service_path.sql",
+				null,
+				("@namespace", reqdata.Service)
+			);
+			if ( result.Data!.Rows.Count == 0) {
+				loc = $"://{reqdata.Service}";
 			} else {
-				var loc = (result.Rows[0]["name"] as string)!.Remove( 0, 3 );
-				path = Path.Combine( loc, reqdata.Configuration );
+				loc = (result.Data!.Rows[0]["name"] as string)!.Remove( 0, 3 );
+			}
+
+			path = Path.Combine( loc, reqdata.Configuration );
+
+			result = Program.Script.RunScript(
+				"sql/fm_find_config.sql",
+				null,
+				("@name", reqdata.Configuration),
+				("@namespace", reqdata.Service)
+			);
+
+			if ( result.Data!.Rows.Count == 0 ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to read configuration: {path} does not exist!" )
+					}
+				};
+				return false;
+			}
+
+			if ( !File.Exists( path ) ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to read configuration: {path} does not exist!" )
+					}
+				};
+				return false;
 			}
 
 			var loaded = provider!.Load( path );
@@ -194,7 +229,7 @@ internal class ModuleFm : Module {
 				return false;
 			}
 
-			loaded.Data!.UID = (string)result.Rows[0]["uuid"];
+			loaded.Data!.UID = (string)result.Data!.Rows[0]["uuid"];
 
 			response = new Response() {
 				Module = Name,
@@ -277,13 +312,48 @@ internal class ModuleFm : Module {
 		}
 
 		try {
-			var result = Program.Database.Select( $"select name, namespace, uuid from std_scope where namespace = '{reqdata.Service}' and name LIKE '://%'" );
-			string path = "";
-			if ( result.Rows.Count == 0) {
-				path = Path.Combine( Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location )!, reqdata.Service, reqdata.Configuration );
+			var path = "";
+			var loc  = "";
+			var result = Program.Script.RunScript(
+				"sql/fm_get_service_path.sql",
+				null,
+				("@namespace", reqdata.Service)
+			);
+			if ( result.Data!.Rows.Count == 0) {
+				loc = $"://{reqdata.Service}";
 			} else {
-				var loc = (result.Rows[0]["name"] as string)!.Remove( 0, 3 );
-				path = Path.Combine( loc, reqdata.Configuration );
+				loc = ((string)result.Data!.Rows[0]["name"]).Remove( 0, 3 );
+			}
+
+			path = Path.Combine( loc, reqdata.Configuration );
+
+			result = Program.Script.RunScript(
+				"sql/fm_find_config.sql",
+				null,
+				("@name", reqdata.Configuration),
+				("@namespace", reqdata.Service)
+			);
+
+			if ( result.Data!.Rows.Count == 0 ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to write configuration: {path} does not exist!" )
+					}
+				};
+				return false;
+			}
+
+			if ( !File.Exists( path ) ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to write configuration: {path} does not exist!" )
+					}
+				};
+				return false;
 			}
 
 			var tree = request.Data.ToObject<ConfigTree>()!;
