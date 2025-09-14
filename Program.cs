@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Data;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -92,6 +93,49 @@ internal static class Program
                     await webSocket.CloseAsync( WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None );
                 }
             }
+			else if ( context.Request.HttpMethod == "GET" ) {
+				var path = Path.Combine( Environment.CurrentDirectory, "app", context.Request.Url!.AbsolutePath.Remove( 0, 1 ) );
+
+				if ( !File.Exists( path ) ) {
+					context.Response.StatusCode = 404;
+					context.Response.Close();
+					continue;
+				}
+
+				var ext = Path.GetExtension( path );
+				var binary = false;
+				switch( ext ) {
+				case ".html":
+					context.Response.ContentType = "text/html";
+					break;
+				case ".js":
+					context.Response.ContentType = "text/javascript";
+					break;
+				case ".css":
+					context.Response.ContentType = "text/css";
+					break;
+				case ".ico":
+					context.Response.ContentType = "image/vnd.microsoft.icon";
+					binary = true;
+					break;
+				default:
+					context.Response.ContentType = "text/plain";
+					break;
+				}
+
+				byte[] data;
+				if ( binary ) {
+					data = File.ReadAllBytes( path );
+				}
+				else {
+					data = Encoding.UTF8.GetBytes( File.ReadAllText( path ) );
+					context.Response.ContentEncoding = Encoding.UTF8;
+				}
+				context.Response.ContentLength64 = data.LongLength;
+
+				await context.Response.OutputStream.WriteAsync( data );
+				context.Response.Close();
+			}
             else
             {
                 context.Response.StatusCode = 400;
@@ -99,6 +143,28 @@ internal static class Program
             }
         }
     }
+
+	static byte[] Compress(byte[] data)
+	{
+		using (var compressedStream = new MemoryStream())
+		using (var zipStream = new GZipStream(compressedStream, CompressionMode.Compress))
+		{
+			zipStream.Write(data, 0, data.Length);
+			zipStream.Close();
+			return compressedStream.ToArray();
+		}
+	}
+
+	static byte[] Decompress(byte[] data)
+	{
+		using (var compressedStream = new MemoryStream(data))
+		using (var zipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
+		using (var resultStream = new MemoryStream())
+		{
+			zipStream.CopyTo(resultStream);
+			return resultStream.ToArray();
+		}
+	}
 
     internal static void WriteToCsv(this DataTable table, string filePath, bool includeHeaders = true)
     {
@@ -158,7 +224,8 @@ internal static class Program
             for (int j = 0; j < dataRow.ItemArray.Length; ++j)
             {
                 Console.Write(dataRow.ItemArray[j]);
-                for (int i = 0; i < colWidths[data.Columns[j].ColumnName] - dataRow.ItemArray[j]!.ToString()!.Length + 10; ++i) Console.Write(" ");
+                for (int i = 0; i < colWidths[data.Columns[j].ColumnName] - dataRow.ItemArray[j]!.ToString()!.Length + 10; ++i)
+					Console.Write(" ");
             }
             Console.WriteLine();
         }
