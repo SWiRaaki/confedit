@@ -138,7 +138,7 @@ internal class ModuleFm : Module {
 		}
 
 		var extension = Path.GetExtension( reqdata.Configuration );
-		var provider = Program.ConfigProvider[extension];
+		Program.ConfigProvider.TryGetValue( extension, out var provider );
 
 		if ( provider == null ) {
 			response = new Response() {
@@ -277,7 +277,7 @@ internal class ModuleFm : Module {
 		}
 
 		var extension = Path.GetExtension( reqdata.Configuration );
-		var provider = Program.ConfigProvider[extension];
+		Program.ConfigProvider.TryGetValue( extension, out var provider );
 
 		if ( provider == null ) {
 			response = new Response() {
