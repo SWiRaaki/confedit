@@ -23,21 +23,34 @@
         log.scrollTop = log.scrollHeight;
     }
 
+        //WebSocket verbunden.
+        //WebSocket ist bereits verbunden.
+        //    Gesendet: { "module": "auth", "function": "login", "data": { "user": "root", "security": "admin?", "grant_type": "password" } }
+        //    Gesendet: { "module": "fm", "function": "write_config", "data": { "auth": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjZS5hdXRoIiwic3ViIjoicm9vdCIsImF1ZCI6ImNlIiwiZXhwIjoxNzU3ODQzMDUyLCJuYmYiOjE3NTc4Mzk0NTIsImlhdCI6MTc1NzgzOTQ1MiwianRpIjoiZmQ5NzU5NzViZDMxNDRlNWIyODgwNDdkMmQ3NDM0YzUifQ.W6ch-SuXUAHwx4tGNQ2oF-85ykWYAqjxuxvUh7mX6OU", "service": "defaultService", "config": "myConfig" } }
+        //Konfigurationsdatei "myConfig" wurde gespeichert.
+        //    Server - Antwort(JSON): { "module": "auth", "code": 0, "data": { "auth": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjZS5hdXRoIiwic3ViIjoicm9vdCIsImF1ZCI6ImNlIiwiZXhwIjoxNzU3ODQ0NjA0LCJuYmYiOjE3NTc4NDEwMDQsImlhdCI6MTc1Nzg0MTAwNCwianRpIjoiZmQ5NzU5NzViZDMxNDRlNWIyODgwNDdkMmQ3NDM0YzUifQ.2Upxc3IxXDrQOepf-Age1teaCBtBHJ20sSr2vPCvQOY" }, "errors": [] }
+        //WebSocket geschlossen.
     async function sendRequest(functionName, extraData = {}) {
+        dataSender.connectWS("ws://localhost:8080");
+        if (!dataSender.ws || dataSender.ws.readyState !== WebSocket.OPEN) {
+            console.warn("❌ WebSocket nicht verbunden, Request abgebrochen.");
+            return;
+        }
+
         try {
             let token = localStorage.getItem("authToken");
+            //login data oder cookies oder wie wird es gemacht
+            const loginRequest = {
+                module: "auth",
+                function: "login",
+                data: {
+                    user: "root",
+                    security: "admin?",
+                    grant_type: "password"
+                }
+            };
 
             if (!token) {
-                const loginRequest = {
-                    module: "auth",
-                    function: "login",
-                    data: {
-                        user: "root",           
-                        security: "admin?",       
-                        grant_type: "password"
-                    }
-                };
-
                 token = await new Promise((resolve, reject) => {
                     const handler = (msg) => {
                         try {
@@ -57,7 +70,9 @@
                     dataSender.sendRaw(loginRequest);
                 });
             }
-
+            //auth benutzer
+            dataSender.sendRaw(loginRequest);
+            //sende req
             const fmRequest = {
                 module: "fm",
                 function: functionName,
@@ -182,27 +197,33 @@
     }
 
     if (form && btnSubmit) {
-        btnSubmit.addEventListener("click", e => {
+        btnSubmit.addEventListener("click", async (e) => {
             e.preventDefault();
 
-            const configName = form.dataset.config || selectedFileField.value;
+            try {
+                const configName = form.dataset.config || selectedFileField.value;
 
-            const items = {
-                booleanOption: document.getElementById("boolean-option")?.checked,
-                serverName: document.getElementById("string-field")?.value,
-                port: parseInt(document.getElementById("number-picker")?.value, 10),
-                validUntil: document.getElementById("date-picker")?.value
-            };
+                const items = {
+                    booleanOption: document.getElementById("boolean-option")?.checked,
+                    serverName: document.getElementById("string-field")?.value,
+                    port: parseInt(document.getElementById("number-picker")?.value, 10),
+                    validUntil: document.getElementById("date-picker")?.value
+                };
 
-            const requestData = {
-                service: "defaultService",
-                config: configName,
-                items: items,
-                validate: true
-            };
+                const requestData = {
+                    service: "defaultService",
+                    config: configName,
+                    items: items,
+                    validate: true
+                };
 
-            sendRequest("write_config", requestData);
-            logMessage(`Konfigurationsdatei "${configName}" wurde gespeichert.`);
+                await sendRequest("write_config", requestData);
+                logMessage(`Konfigurationsdatei "${configName}" wurde gespeichert.`);
+            } catch (err) {
+                console.error("❌ Fehler beim Speichern:", err);
+                logMessage(`❌ Fehler beim Speichern der Datei: ${err.message || err}`);
+            }
+
         });
     }
 
