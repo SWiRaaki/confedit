@@ -1,4 +1,4 @@
-class DataSender {
+﻿class DataSender {
     constructor() {
         this.ws = null;
         this.onLog = null;
@@ -41,17 +41,23 @@ class DataSender {
         if (!this.ws) {
             this.log("WebSocket nicht verbunden. Versuche neu zu verbinden...");
             this.connectWS();
-            setTimeout(() => this.sendRaw(message), 500); 
+            setTimeout(() => this.sendRaw(message), 500);
             return;
         }
 
-        let payload = message;
-        if (typeof message !== "string") {
-            payload = JSON.stringify(message);
-        }
+        try {
+            let payload = message;
+            if (typeof message !== "string") {
+                payload = JSON.stringify(message);
+            }
 
-        this.ws.send(payload);
-        this.log("Gesendet: " + payload);
+            this.ws.send(payload);
+            this.log("Gesendet: " + payload);
+        } catch (err) {
+            this.log("Fehler beim Senden: " + err.message);
+            console.error("WebSocket sendRaw Error:", err);
+            setTimeout(() => this.sendRaw(message), 1000);
+        }
     }
 
     async sendForm(form) {
