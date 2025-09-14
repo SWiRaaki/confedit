@@ -1,8 +1,6 @@
 # Build Folders
 bin/
 obj/
-app/
-app
 # Visual Studio Code settings
 .vscode/
 

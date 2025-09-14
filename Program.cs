@@ -94,7 +94,13 @@ internal static class Program
                 }
             }
 			else if ( context.Request.HttpMethod == "GET" ) {
-				var path = Path.Combine( Environment.CurrentDirectory, "app", context.Request.Url!.AbsolutePath.Remove( 0, 1 ) );
+				var rsx = context.Request.Url!.AbsolutePath;
+				if( rsx == "/" ) {
+					Console.WriteLine( "App request: Redirect to web frontend.." );
+					rsx = "/login.html";
+				}
+				var path = Path.Combine( Environment.CurrentDirectory, "app", rsx.Remove( 0, 1 ) );
+				Console.WriteLine( path );
 
 				if ( !File.Exists( path ) ) {
 					context.Response.StatusCode = 404;

@@ -240,6 +240,16 @@ internal class AdminRemoveUserFromGroupRequestData {
 	internal string GroupUID { get; set; } = "";
 }
 
+internal class AdminListServicesRequestData {
+	[JsonProperty("auth", Required = Required.Always)]
+	internal string Auth { get; set; } = "";
+}
+
+internal class AdminListServicesResponseData {
+	[JsonProperty("services")]
+	internal List<(string UID, string Name, string Abbreviation, string Description)> Services { get; set; } = new();
+}
+
 internal class ModuleAdmin : Module {
 	internal ModuleAdmin() : base() {
 		Function.Add( "list_users", ListUsers );
@@ -1549,4 +1559,482 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 	}
+
+	/*
+	internal bool ListServices( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "list_services" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.list_services" )
+				}
+			};
+			return false;
+		}
+
+		AdminListServicesRequestData reqdata = request.Data.ToObject<AdminListServicesRequestData>()!;
+		AdminListServicesResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "services", "Read" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to retrieve service list!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var selected = Program.Script.RunScript( "sql/admin_list_services.sql", null );
+			if ( !selected ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.SqlError, $"Failed to retrieve service list: [{selected.Code}]{selected.Message}")
+					}
+				};
+				return false;
+			}
+
+			respdata = new();
+			foreach( DataRow row in selected.Data!.Rows ) {
+				respdata.Services.Add( (
+					(string)row["uuid"],
+					(string)row["name"]
+				) );
+			}
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to retrieve services: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool GetService( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "get_service" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.get_service" )
+				}
+			};
+			return false;
+		}
+
+		AdminGetServiceRequestData reqdata = request.Data.ToObject<AdminGetServiceRequestData>()!;
+		AdminGetServiceResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "services", "Read" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to retrieve service data!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var selected = Program.Script.RunScript(
+				"sql/admin_get_service.sql",
+				null,
+				("@uuid", reqdata.UID)
+			);
+
+			if ( !selected ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.SqlError, $"Failed to retrieve service: [{selected.Code}]{selected.Message}" )
+					}
+				};
+				return false;
+			}
+			respdata = new();
+			if ( selected.Data!.Rows.Count == 0 ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to retrieve service: Service with ID {reqdata.UID} does not exist" )
+					}
+				};
+				return false;
+			}
+			respdata = new() {
+				UID = (string)selected.Data!.Rows[0]["uuid"],
+				Name = (string)selected.Data!.Rows[0]["name"],
+				Abbreviation = (string)selected.Data!.Rows[0]["abbreviation"],
+				Description = (string)selected.Data!.Rows[0]["description"]
+			};
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to retrieve services: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool CreateService( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "create_service" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.create_service" )
+				}
+			};
+			return false;
+		}
+
+		AdminCreateServiceRequestData reqdata = request.Data.ToObject<AdminCreateServiceRequestData>()!;
+		AdminCreateServiceResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "services", "Create" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to create service data!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var inserted = Program.Script.RunScript(
+				"sql/admin_create_service.sql",
+				null,
+				("@name", reqdata.Name),
+				("@abbreviation", reqdata.Abbreviation),
+				("@description", reqdata.Description)
+			);
+
+			if ( !inserted ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataCreationFailed, $"Failed to create service: [{inserted.Code}]{inserted.Message}" )
+					}
+				};
+				return false;
+			}
+
+			respdata = new() {
+				UID = (string)inserted.Data!.Rows[0]["uuid"],
+				Name = (string)inserted.Data!.Rows[0]["name"],
+				Abbreviation = (string)inserted.Data!.Rows[0]["abbreviation"],
+				Description = (string)inserted.Data!.Rows[0]["description"]
+			};
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to create services: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool UpdateService( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "update_service" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.update_service" )
+				}
+			};
+			return false;
+		}
+
+		AdminUpdateServiceRequestData reqdata = request.Data.ToObject<AdminUpdateServiceRequestData>()!;
+		AdminUpdateServiceResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "services", "Write" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to update service data!" )
+				}
+			};
+			return false;
+		}
+
+		var transaction = Program.Database.BeginTransaction();
+		try {
+			var setlist = new List<string>();
+			if ( !string.IsNullOrWhiteSpace( reqdata.Name ) ) {
+				setlist.Add( "name = @name" );
+			}
+			if ( !string.IsNullOrWhiteSpace( reqdata.Abbreviation ) ) {
+				setlist.Add( "abbreviation = @abbreviation" );
+			}
+			if ( !string.IsNullOrWhiteSpace( reqdata.Description ) ) {
+				setlist.Add( "description = @description" );
+			}
+			var placeholder = new Dictionary<string, string>();
+			placeholder.Add( "SETLIST", string.Join( ", ", setlist ) );
+			var updated = Program.Script.RunScript(
+					"admin_update_service.sql",
+					placeholder,
+					("@uuid", reqdata.UID),
+					("@name", reqdata.Name ?? ""),
+					("@abbreviation", reqdata.Abbreviation ?? ""),
+					("@description", reqdata.Description ?? "")
+			);
+			if ( !updated ) {
+				transaction.Rollback();
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataCreationFailed, $"Failed to update service!" )
+					}
+				};
+				return false;
+			}
+
+			transaction.Commit();
+			respdata = new() {
+				UID = (string)updated.Data!.Rows[0]["uuid"],
+				Name = (string)updated.Data!.Rows[0]["name"],
+				Abbreviation = (string)updated.Data!.Rows[0]["abbreviation"],
+				Description = (string)updated.Data!.Rows[0]["description"]
+			};
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			transaction.Rollback();
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to update services: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+
+	internal bool DeleteService( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "delete_service" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.delete_service" )
+				}
+			};
+			return false;
+		}
+
+		AdminDeleteServiceRequestData reqdata = request.Data.ToObject<AdminDeleteServiceRequestData>()!;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "admin", "services", "Delete" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to delete service data!" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var deleted = Program.Script.RunScript(
+					"admin_delete_service.sql",
+					null,
+					("@uuid", reqdata.UID)
+			);
+			if ( !deleted ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataCreationFailed, $"Failed to delete service!" )
+					}
+				};
+				return false;
+			}
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None
+			};
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to delete services: {e.Message}" )
+				}
+			};
+			return false;
+		}
+	}
+	*/
 }
