@@ -156,10 +156,9 @@
                 const li = document.createElement("li");
 
                 const fileBtn = document.createElement("button");
-                fileBtn.className = "file-item btn btn-light";
+                fileBtn.className = "file-item";
                 fileBtn.dataset.filename = filename;
                 fileBtn.textContent = `📄 ${filename}`;
-                fileBtn.style.cursor = "pointer";
 
                 const delBtn = document.createElement("button");
                 delBtn.className = "delete-btn btn btn-sm btn-danger";
@@ -287,10 +286,9 @@
                 if (ul) {
                     const li = document.createElement("li");
                     const fileBtn = document.createElement("button");
-                    fileBtn.className = "file-item btn btn-light";
+                    fileBtn.className = "file-item";
                     fileBtn.dataset.filename = file.name;
                     fileBtn.textContent = `📄 ${file.name}`;
-                    fileBtn.style.cursor = "pointer";
 
                     const delBtn = document.createElement("button");
                     delBtn.className = "delete-btn btn btn-sm btn-danger";

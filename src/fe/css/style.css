@@ -929,6 +929,24 @@ code {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    background: none;
+    border: none;
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
+    display: block;
+    width: 100%;
+}
+
+.file-item:hover {
+    text-decoration: underline;
+    color: #000;
+    background: none;
+    border: none;
 }
 
 .delete-btn {
