@@ -89,9 +89,8 @@
                 if (selectedFileField) selectedFileField.value = fileBtn.dataset.filename;
                 logMessage(`Datei ausgewählt: ${fileBtn.dataset.filename}`);
 
-                sendRequest("fm", "get_config", {
-                    auth: localStorage.getItem("authToken"),
-                    service: "defaultService", 
+                sendRequest("get_config", {
+                    service: "defaultService",
                     config: fileBtn.dataset.filename
                 });
             });
@@ -106,8 +105,7 @@
                         }
                         logMessage(`Datei aus Liste entfernt: ${fileBtn.dataset.filename}`);
 
-                        sendRequest("fm", "delete_config", {
-                            auth: localStorage.getItem("authToken"),
+                        sendRequest("delete_config", {
                             service: "defaultService",
                             config: fileBtn.dataset.filename
                         });
@@ -188,9 +186,6 @@
         btnSubmit.addEventListener("click", e => {
             e.preventDefault();
 
-            const moduleName = "fm"; 
-            const functionName = "write_config"; 
-
             const configName = form.dataset.config || selectedFileField.value;
 
             const items = {
@@ -201,14 +196,14 @@
             };
 
             const requestData = {
-                auth: localStorage.getItem("authToken"),
-                service: "defaultService", 
+                service: "defaultService",
                 config: configName,
                 items: items,
                 validate: true
             };
 
-            sendRequest(moduleName, functionName, requestData);
+            sendRequest("write_config", requestData);
+            logMessage(`Konfigurationsdatei "${configName}" wurde gespeichert.`);
         });
     }
 
@@ -245,11 +240,12 @@
 
         sendBtn.addEventListener("click", () => {
             const message = messageInput.value;
-            sendRequest("fm", "custom_message", {
-                auth: localStorage.getItem("authToken"),
-                service: "defaultService", 
-                raw: message
-            });
+            sendRequest("write_config", {
+                service: "defaultService",
+                config: configName,
+                items: items,
+                validate: true
+            })
         });
     }
 
@@ -261,10 +257,9 @@
     if (btnNewFile) btnNewFile.addEventListener("click", () => {
         const newConfigName = "newConfig.json";
 
-        sendRequest("fm", "new_config", {
-            auth: localStorage.getItem("authToken"),
+        sendRequest("new_config", {
             service: "defaultService", 
-            config: newConfigName
+            config: "newConfig.json"
         });
 
         logMessage(`Neue Konfigurationsdatei angelegt: ${newConfigName}`);
@@ -280,9 +275,8 @@
             reader.onload = () => {
                 const content = reader.result;
 
-                sendRequest("fm", "upload_config", {
-                    auth: localStorage.getItem("authToken"),
-                    service: "defaultService",      
+                sendRequest("upload_config", {
+                    service: "defaultService",
                     config: file.name,
                     content: content
                 });
@@ -315,8 +309,30 @@
         fileInput.click();
     });
 
+    if (btnBearbeiten) {
+        btnBearbeiten.addEventListener("click", () => {
+            const configName = form?.dataset.config || selectedFileField?.value;
+
+            const items = {
+                booleanOption: document.getElementById("boolean-option")?.checked,
+                serverName: document.getElementById("string-field")?.value,
+                port: parseInt(document.getElementById("number-picker")?.value, 10),
+                validUntil: document.getElementById("date-picker")?.value
+            };
+
+            const requestData = {
+                service: "defaultService",
+                config: configName,
+                items: items,
+                validate: true
+            };
+
+            sendRequest("write_config", requestData);
+            logMessage(`Konfigurationsdatei "${configName}" wurde über "Bearbeiten" gespeichert.`);
+        });
+    }
+
     if (btnVersionen) btnVersionen.addEventListener("click", () => window.location.href = "versionen.html");
-    if (btnBearbeiten) btnBearbeiten.addEventListener("click", () => logMessage("Bearbeitet."));
 
     loadFileList();
     dataSender.onLog = logMessage;
