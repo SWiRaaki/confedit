@@ -38,6 +38,24 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", (e) => {
         e.preventDefault();
 
+		const xrequest= new XMLHttpRequest();
+		try {
+			xrequest.open( "POST", "/rest-test" );
+			xrequest.responseType = "text";
+
+			xrequest.addEventListener( "load", () => console.log( "Response: ", JSON.parse( xrequest.responseText ) ) );
+			xrequest.addEventListener( "error", () => console.error( "XHR error" ) );
+
+			let reqbody = {
+				msg: "FICK DICH!",
+				num: 69
+			};
+			xrequest.send( JSON.stringify( reqbody ) );
+		}
+		catch( error ) {
+			console.error( `XHR error ${request.status}` );
+		}
+
         const user = document.getElementById("user").value.trim();
         const security = document.getElementById("security").value.trim();
         const grantType = document.getElementById("grantType")?.value || "password"; 

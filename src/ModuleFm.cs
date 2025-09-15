@@ -33,6 +33,28 @@ internal class FmGetConfigRequestData {
 	internal string Configuration { get; set; } = "";
 }
 
+internal class FmCreateConfigRequestData {
+	[JsonProperty("auth", Required = Required.Always)]
+	internal string Auth { get; set; } = "";
+
+	[JsonProperty("service", Required = Required.Always)]
+	internal string Service { get; set; } = "";
+
+	[JsonProperty("config", Required = Required.Always)]
+	internal string Configuration { get; set; } = "";
+}
+
+internal class FmCreateConfigResponseData {
+	[JsonProperty("service")]
+	internal string Service { get; set; } = "";
+
+	[JsonProperty("config")]
+	internal string Configuration { get; set; } = "";
+
+	[JsonProperty("uid")]
+	internal string UID { get; set; } = "";
+}
+
 internal class FmWriteConfigRequestData {
 	[JsonProperty("auth", Required = Required.Always)]
 	internal string Auth { get; set; } = "";
@@ -43,7 +65,7 @@ internal class FmWriteConfigRequestData {
 	[JsonProperty("config", Required = Required.Always)]
 	internal string Configuration { get; set; } = "";
 
-	[JsonProperty("uid", Required = Required.Always)]
+	[JsonProperty("uid")]
 	internal string UID { get; set; } = "";
 }
 
@@ -387,5 +409,128 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
+	}
+
+	internal bool CreateConfig( object caller, Request request, out Response response ) {
+		if ( request.Module != Name || request.Function != "create_config" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.create_config" )
+				}
+			};
+			return false;
+		}
+
+		FmCreateConfigRequestData reqdata = request.Data.ToObject<FmCreateConfigRequestData>()!;
+		FmCreateConfigResponseData respdata;
+
+		if ( reqdata == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, $"Failed creating configuration: Invalid request data provided!" )
+				}
+			};
+			return false;
+		}
+
+		var extension = Path.GetExtension( reqdata.Configuration );
+		Program.ConfigProvider.TryGetValue( extension, out var provider );
+
+		if ( provider == null ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.ProviderNotFound, $"No provider known to create {extension}-configurations" )
+				}
+			};
+		}
+
+		var token = Jwt.FromString( reqdata.Auth );
+		if ( token.IsExpired() ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Expired, "Session token expired!" )
+				}
+			};
+			return false;
+		}
+		if ( !token.IsAuthorized( "service", reqdata.Service, "Create" ) && !token.IsAuthorized( reqdata.Service, "any", "Create" ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Authorization,
+				Errors = {
+					new Error( AuthorizationError.Unauthorized, $"Not authorized to create configuration {reqdata.Service}:{reqdata.Configuration}" )
+				}
+			};
+			return false;
+		}
+
+		try {
+			var path = "";
+			var loc  = "";
+			var result = Program.Script.RunScript(
+				"sql/fm_get_service_path.sql",
+				null,
+				("@namespace", reqdata.Service)
+			);
+
+			if ( result.Data!.Rows.Count == 0) {
+				loc = reqdata.Service;
+			} else {
+				loc = (result.Data!.Rows[0]["name"] as string)!.Remove( 0, 3 );
+			}
+
+			path = Path.Combine( loc, reqdata.Configuration );
+
+			result = Program.Script.RunScript(
+				"sql/fm_create_config.sql",
+				null,
+				("@name", reqdata.Configuration),
+				("@namespace", reqdata.Service)
+			);
+
+			if ( !result ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to create configuration: [{result.Code}] {result.Message}" )
+					}
+				};
+				return false;
+			}
+
+			File.Create( path );
+			respdata = new() {
+				Service = reqdata.Service,
+				Configuration = reqdata.Configuration,
+				UID = (string)result.Data!.Rows[0]["uuid"]
+			};
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata ) ?? new JObject()
+			};
+
+			return true;
+		}
+		catch ( Exception e ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Unknown,
+				Errors = {
+					new Error( -1, $"Failed to create configuration: {e.Message}" )
+				}
+			};
+			return false;
+		}
 	}
 }

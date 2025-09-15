@@ -93,11 +93,32 @@ internal static class Program
                     await webSocket.CloseAsync( WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None );
                 }
             }
+			else if ( context.Request.HttpMethod == "POST" ) {
+				var rsx = context.Request.Url!.AbsolutePath;
+				if ( rsx == "/rest-test" ) {
+					byte[] body_data = new byte[context.Request.ContentLength64];
+					context.Request.InputStream.Read( body_data );
+					var body = Encoding.UTF8.GetString( body_data );
+					Console.WriteLine( body );
+					context.Response.StatusCode = 200;
+					await context.Response.OutputStream.WriteAsync( Encoding.UTF8.GetBytes( "{\n\t\"msg\":\"ok\",\n\t\"code\":0\n}" ) );
+					context.Response.Close();
+				}
+			}
 			else if ( context.Request.HttpMethod == "GET" ) {
 				var rsx = context.Request.Url!.AbsolutePath;
 				if( rsx == "/" ) {
 					Console.WriteLine( "App request: Redirect to web frontend.." );
 					rsx = "/login.html";
+				}
+				else if ( rsx == "/rest-test" ) {
+					byte[] body_data = new byte[context.Request.ContentLength64];
+					context.Request.InputStream.Read( body_data );
+					var body = Encoding.UTF8.GetString( body_data );
+					Console.WriteLine( body );
+					context.Response.StatusCode = 200;
+					context.Response.Close();
+					continue;
 				}
 				var path = Path.Combine( Environment.CurrentDirectory, "app", rsx.Remove( 0, 1 ) );
 				Console.WriteLine( path );
