@@ -10,7 +10,7 @@ internal class AdminListUsersRequestData {
 
 internal class AdminListUsersResponseData {
 	[JsonProperty("users")]
-	internal List<(string UID, string Name, string Abbreviation)> Users { get; set; } = new();
+	internal List<StdUser> Users { get; set; } = new();
 }
 
 internal class AdminGetUserRequestData {
@@ -333,11 +333,11 @@ internal class ModuleAdmin : Module {
 
 			respdata = new();
 			foreach( DataRow row in selected.Data!.Rows ) {
-				respdata.Users.Add( (
-					(string)row["uuid"],
-					(string)row["name"],
-					(string)row["abbreviation"]
-				) );
+				respdata.Users.Add( new StdUser() {
+					UID = (string)row["uuid"],
+					Name = (string)row["name"],
+					Abbreviation = (string)row["abbreviation"]
+				} );
 			}
 
 			response = new Response() {
