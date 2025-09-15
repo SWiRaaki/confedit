@@ -104,4 +104,5 @@ class Service {
     }
 }
 
-const service = new Service( "ws://localhost:8080" );
+const service = new Service("ws://localhost:8080");
+service.authenticate();
