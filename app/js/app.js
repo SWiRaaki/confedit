@@ -10,8 +10,8 @@ async function loadUsers() {
 			}
         });
 
-        if (response && response.code === 0 && response.data && response.data.users) {
-            populateUserTable(response.data.users);
+        if (response && response.code === 0 && response.data && response.data.groups) {
+            populateUserTable(response.data.groups);
         } else {
             console.error("Failed to load users:", response);
         }
@@ -30,8 +30,8 @@ async function loadGroups() {
             }
         });
 
-        if (response && response.code === 0 && response.data && response.data.users) {
-            populateGroupTable(response.data.users);
+        if (response && response.code === 0 && response.data && response.data.groups) {
+            populateGroupTable(response.data.groups);
         } else {
             console.error("Failed to load groups:", response);
         }
@@ -507,9 +507,9 @@ async function loadGroupsForSelect(selectElement) {
 }
         });
 
-        if (response && response.code === 0 && response.data && response.data.users) {
+        if (response && response.code === 0 && response.data && response.data.groups) {
             selectElement.innerHTML = '<option value="">Keine Gruppe auswählen</option>';
-            response.data.users.forEach(group => {
+            response.data.groups.forEach(group => {
                 const option = document.createElement('option');
                 option.value = group.uid;
                 option.textContent = `${group.name} (${group.abbreviation})`;
