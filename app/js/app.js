@@ -5,7 +5,9 @@ async function loadUsers() {
         const response = await service.sendRequest({
             module: "admin",
             function: "list_users",
-            data: {}
+            data: {
+				auth: localStorage.getItem( "authToken" )
+			}
         });
 
         if (response && response.code === 0 && response.data && response.data.users) {

@@ -9,6 +9,7 @@ class Service {
 		this.debug = true;
 		this._queue = [];
 		this._pending = null;
+		this._authenticated = false;
 
 		this.ws.addEventListener( "message", ev => this._onMessage( ev.data ) );
 		this.ws.addEventListener( "error", () => this._failAll( new Error( "WebSocket error" ) ) );
@@ -27,11 +28,12 @@ class Service {
 				grant_type: token ? "jwt" : "password"
 			}
 		};
-		let authresp = await this.sendRequest( authreq );
+		let authresp = await this._sendRequest( authreq );
 		if ( !authresp || authresp.code != 0 ) {
 			console.log( "authentication failed" );
 			return false;
 		} else {
+			this._authenticated = true;
 			console.log( "service ready" );
 			localStorage.setItem( "authToken", authresp.data.auth );
 			return true;
@@ -39,6 +41,17 @@ class Service {
 	}
 
 	async sendRequest( request ) {
+		await this._open;
+
+		if ( !this._authenticated ) {
+			await this.authenticate();
+		}
+
+		return this._sendRequest( request );
+	}
+
+	async _sendRequest( request ) {
+		await this._open;
 		return new Promise( ( resolve, reject ) => {
 			const body = typeof request === "string" ? request : JSON.stringify( request );
 			this._queue.push( { request, body, resolve, reject } );
@@ -52,7 +65,7 @@ class Service {
 		}
 
 		this._pending = this._queue.shift();
-		this._debug( Service.plainClone( this._pending.request ) );
+		this._debug( "Request: ", Service.plainClone( this._pending.request ) );
 		this.ws.send( this._pending.body );
 	}
 
@@ -71,7 +84,7 @@ class Service {
 			} catch {
 				response = data;
 			} finally {
-				this._debug( Service.plainClone( response ) );
+				this._debug( "Response: ", Service.plainClone( response ) );
 				resolve( response );
 			}
 		} else {
@@ -105,4 +118,3 @@ class Service {
 }
 
 const service = new Service("ws://localhost:8080");
-service.authenticate();
