@@ -293,7 +293,7 @@ Dies ist eine simplifizierte API-Referenz der aktuell implementierten Module und
   "module": "admin",
   "code": 0,
   "data": {
-    "users": [
+    "groups": [
       { "uid": "g1...", "name": "Admins", "abbreviation": "admin", "description": "Administrators" }
     ]
   },
