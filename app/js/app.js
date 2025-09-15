@@ -25,7 +25,9 @@ async function loadGroups() {
         const response = await service.sendRequest({
             module: "admin",
             function: "list_groups",
-            data: {}
+            data: {
+                auth: localStorage.getItem("authToken")
+            }
         });
 
         if (response && response.code === 0 && response.data && response.data.users) {
@@ -94,7 +96,10 @@ async function loadUserGroups(userUid) {
         const response = await service.sendRequest({
             module: "admin",
             function: "list_user_groups",
-            data: { uid: userUid }
+            data: {
+                auth: localStorage.getItem("authToken"),
+                uid: userUid
+                            }
         });
 
         if (response && response.code === 0 && response.data && response.data.groups) {
@@ -117,6 +122,7 @@ async function createUser(name, abbreviation, security, groupUid) {
             module: "admin",
             function: "create_user",
             data: {
+                auth: localStorage.getItem("authToken"),
                 name: name,
                 abbreviation: abbreviation,
                 security: security
@@ -150,6 +156,7 @@ async function addUserToGroup(userUid, groupUid) {
             module: "admin",
             function: "add_user_to_group",
             data: {
+                auth: localStorage.getItem("authToken"),
                 user_uid: userUid,
                 group_uid: groupUid
             }
@@ -175,6 +182,7 @@ async function removeUserFromGroup(userUid, groupUid) {
             module: "admin",
             function: "remove_user_from_group",
             data: {
+                auth: localStorage.getItem("authToken"),
                 user_uid: userUid,
                 group_uid: groupUid
             }
@@ -200,6 +208,7 @@ async function updateUser(uid, name, abbreviation, security) {
             module: "admin",
             function: "update_user",
             data: {
+                auth: localStorage.getItem("authToken"),
                 uid: uid,
                 name: name,
                 abbreviation: abbreviation,
@@ -225,7 +234,10 @@ async function deleteUser(uid) {
         const response = await service.sendRequest({
             module: "admin",
             function: "delete_user",
-            data: { uid: uid }
+            data: {
+                auth: localStorage.getItem("authToken"),
+                uid: uid
+            }
         });
 
         if (response && response.code === 0) {
@@ -247,6 +259,7 @@ async function createGroup(name, abbreviation, description) {
             module: "admin",
             function: "create_group",
             data: {
+                auth: localStorage.getItem("authToken"),
                 name: name,
                 abbreviation: abbreviation,
                 description: description
@@ -272,6 +285,7 @@ async function updateGroup(uid, name, abbreviation, description) {
             module: "admin",
             function: "update_group",
             data: {
+                auth: localStorage.getItem("authToken"),
                 uid: uid,
                 name: name,
                 abbreviation: abbreviation,
@@ -297,7 +311,10 @@ async function deleteGroup(uid) {
         const response = await service.sendRequest({
             module: "admin",
             function: "delete_group",
-            data: { uid: uid }
+            data: {
+                auth: localStorage.getItem("authToken"),
+                uid: uid
+            }
         });
 
         if (response && response.code === 0) {
@@ -485,7 +502,9 @@ async function loadGroupsForSelect(selectElement) {
         const response = await service.sendRequest({
             module: "admin",
             function: "list_groups",
-            data: {}
+            data: {
+                auth: localStorage.getItem("authToken")
+}
         });
 
         if (response && response.code === 0 && response.data && response.data.users) {
