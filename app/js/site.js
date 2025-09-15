@@ -1,8 +1,8 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("configForm");
     const btnCancel = document.getElementById("btnCancel");
     const btnSubmit = document.getElementById("btnSubmit");
-    const log = document.getElementById("log");
+    const logBox = document.getElementById("log");
     const connectBtn = document.getElementById("connectBtn");
     const closeBtn = document.getElementById("closeBtn");
     const sendBtn = document.getElementById("sendBtn");
@@ -11,84 +11,109 @@
     const dataTree = document.getElementById("data-tree");
     const selectedFileField = document.getElementById("selected-file");
 
-    const jwtToken = window.currentJwtToken || "<<<jwt_token>>>";
     const serviceName = window.currentService || "defaultService";
-    let selectedFileName = "test";
 
-    //dataSender.connectWS("ws://localhost:8080");
-	service.authenticate();
+    service.authenticate();
 
     function logMessage(msg) {
-        if (!log) return;
-        log.innerText += msg + "\n";
-        log.scrollTop = log.scrollHeight;
+        if (!logBox) return;
+        logBox.innerText += msg + "\n";
+        logBox.scrollTop = logBox.scrollHeight;
     }
+    dataSender.onLog = logMessage;
 
-    async function sendRequest(functionName, extraData = {}) {
-        //dataSender.connectWS("ws://localhost:8080");
-        if (!service.ws || service.ws.readyState !== WebSocket.OPEN) {
-            console.warn("❌ WebSocket nicht verbunden, Request abgebrochen.");
-            return;
-        }
-
-		let token = localStorage.getItem( "authToken" );
-        try {
-            //sende req
-            const fmRequest = {
-                module: "fm",
-                function: functionName,
-                data: {
-                    auth: token,
-                    service: extraData.service || "defaultService",
-                    config: extraData.config || "test",
-                }
-            };
-
-            //dataSender.sendRaw(fmRequest);
-			let fmResponse = service.sendRequest( fmRequest );
-
-        } catch (err) {
-            console.error("❌ Fehler beim Senden des Requests:", err);
-        }
-    }
-
-    function initFileList() {
+    // fm.get_list
+    async function loadFileList() {
         if (!dataTree) return;
-        const items = Array.from(dataTree.querySelectorAll("li"));
-
-        items.forEach(li => {
-            const fileBtn = li.querySelector(".file-item");
-            const delBtn = li.querySelector(".delete-btn");
-            if (!fileBtn) return;
-
-            fileBtn.addEventListener("click", () => {
-                if (selectedFileField) selectedFileField.value = fileBtn.dataset.filename;
-                logMessage(`Datei ausgewählt: ${fileBtn.dataset.filename}`);
-
-                sendRequest("get_config", {
-                    service: "defaultService",
-                    config: fileBtn.dataset.filename
-                });
+        try {
+            const resp = await service.sendRequest({
+                module: "fm",
+                function: "get_list",
+                data: {}
             });
 
-            if (delBtn) {
+            if (!resp || !resp.data) {
+                logMessage("⚠️ Keine Dateien gefunden.");
+                return;
+            }
+
+            const ul = document.createElement("ul");
+            ul.className = "file-list";
+
+            resp.data.forEach(filename => {
+                const li = document.createElement("li");
+
+                const fileBtn = document.createElement("button");
+                fileBtn.className = "file-item";
+                fileBtn.dataset.filename = filename;
+                fileBtn.textContent = `📄 ${filename}`;
+
+                const delBtn = document.createElement("button");
+                delBtn.className = "delete-btn btn btn-sm btn-danger";
+                delBtn.textContent = "×";
+                delBtn.title = "Löschen";
+
+                fileBtn.addEventListener("click", () => loadFileConfig(filename));
+
                 delBtn.addEventListener("click", e => {
                     e.stopPropagation();
-                    if (confirm(`Datei "${fileBtn.dataset.filename}" löschen?`)) {
+                    if (confirm(`Datei "${filename}" löschen?`)) {
                         li.remove();
-                        if (selectedFileField && selectedFileField.value === fileBtn.dataset.filename) {
+                        if (selectedFileField.value === filename) {
                             selectedFileField.value = "";
                         }
-                        logMessage(`Datei aus Liste entfernt: ${fileBtn.dataset.filename}`);
+                        logMessage(`Datei gelöscht: ${filename}`);
 
-                        sendRequest("delete_config", {
-                            service: "defaultService",
-                            config: fileBtn.dataset.filename
+                        service.sendRequest({
+                            module: "fm",
+                            function: "delete_config",
+                            data: { service: serviceName, config: filename }
                         });
                     }
                 });
+
+                li.appendChild(fileBtn);
+                li.appendChild(delBtn);
+                ul.appendChild(li);
+            });
+
+            dataTree.innerHTML = "<h3>Dateien</h3>";
+            dataTree.appendChild(ul);
+        } catch (err) {
+            logMessage("❌ Fehler beim Laden der Liste: " + err.message);
+        }
+		initSearch()
+    }
+
+    // fm.get_config
+    async function loadFileConfig(filename) {
+        try {
+            const resp = await service.sendRequest({
+                module: "fm",
+                function: "get_config",
+                data: { filename }
+            });
+
+            if (!resp || !resp.data) {
+                logMessage(`⚠️ Keine Daten für Datei ${filename}`);
+                return;
             }
-        });
+
+            selectedFileField.value = filename;
+            if (resp.data.serverName) {
+                document.getElementById("string-field").value = resp.data.serverName;
+            }
+            if (resp.data.port) {
+                document.getElementById("number-picker").value = resp.data.port;
+            }
+            if (resp.data.enabled !== undefined) {
+                document.getElementById("boolean-option").checked = resp.data.enabled;
+            }
+
+            logMessage(`✅ Datei geladen: ${filename}`);
+        } catch (err) {
+            logMessage(`❌ Fehler beim Laden von ${filename}: ${err.message}`);
+        }
     }
 
     function initSearch() {
@@ -117,53 +142,12 @@
         });
     }
 
-    async function loadFileList() {
-        if (!dataTree) return;
-        try {
-            const response = await fetch("/testfiles");
-            if (!response.ok) throw new Error("Server nicht erreichbar");
-            const files = await response.json();
-            if (!Array.isArray(files) || files.length === 0) throw new Error("Keine Dateien vom Server");
-
-            const ul = document.createElement("ul");
-            ul.className = "file-list";
-
-            files.forEach(filename => {
-                const li = document.createElement("li");
-
-                const fileBtn = document.createElement("button");
-                fileBtn.className = "file-item";
-                fileBtn.dataset.filename = filename;
-                fileBtn.textContent = `📄 ${filename}`;
-
-                const delBtn = document.createElement("button");
-                delBtn.className = "delete-btn btn btn-sm btn-danger";
-                delBtn.textContent = "×";
-                delBtn.title = "Löschen";
-
-                li.appendChild(fileBtn);
-                li.appendChild(delBtn);
-                ul.appendChild(li);
-            });
-
-            dataTree.innerHTML = "<h3>Dateien</h3>";
-            dataTree.appendChild(ul);
-        } catch (err) {
-            console.warn("Server-Dateiliste konnte nicht geladen werden, verwende statische Liste");
-            logMessage("Server-Dateiliste konnte nicht geladen werden, verwende statische Liste.");
-        }
-
-        initFileList();
-        initSearch();
-    }
-
+    // fm.write_config
     if (form && btnSubmit) {
         btnSubmit.addEventListener("click", async (e) => {
             e.preventDefault();
-
             try {
-                const configName = form.dataset.config || selectedFileField.value;
-
+                const configName = selectedFileField.value;
                 const items = {
                     booleanOption: document.getElementById("boolean-option")?.checked,
                     serverName: document.getElementById("string-field")?.value,
@@ -171,31 +155,28 @@
                     validUntil: document.getElementById("date-picker")?.value
                 };
 
-                const requestData = {
-                    service: "defaultService",
-                    config: configName,
-                    items: items,
-                    validate: true
-                };
+                await service.sendRequest({
+                    module: "fm",
+                    function: "write_config",
+                    data: { service: serviceName, config: configName, items, validate: true }
+                });
 
-                await sendRequest("write_config", requestData);
-                logMessage(`Konfigurationsdatei "${configName}" wurde gespeichert.`);
+                logMessage(`✅ Konfigurationsdatei "${configName}" gespeichert.`);
             } catch (err) {
-                console.error("❌ Fehler beim Speichern:", err);
-                logMessage(`❌ Fehler beim Speichern der Datei: ${err.message || err}`);
+                logMessage(`❌ Fehler beim Speichern: ${err.message}`);
             }
-
         });
     }
 
     if (btnCancel) {
         btnCancel.addEventListener("click", () => {
-            logMessage("Aktion abbrechen...");
             form?.reset();
-            logMessage("Aktion abgebrochen.");
+            selectedFileField.value = "";
+            logMessage("ℹ️ Formular zurückgesetzt.");
         });
     }
 
+    // Connection test
     if (connectBtn && closeBtn && sendBtn && messageInput) {
         closeBtn.disabled = true;
         sendBtn.disabled = true;
@@ -207,7 +188,7 @@
             closeBtn.disabled = false;
             sendBtn.disabled = false;
             messageInput.disabled = false;
-            logMessage("WebSocket Verbindung wird hergestellt...");
+            logMessage("WebSocket Verbindung hergestellt.");
         });
 
         closeBtn.addEventListener("click", () => {
@@ -220,100 +201,76 @@
         });
 
         sendBtn.addEventListener("click", () => {
-            const message = messageInput.value;
-            sendRequest("write_config", {
-                service: "defaultService",
-                config: configName,
-                items: items,
-                validate: true
-            })
+            const msg = messageInput.value || '{"ping":"pong"}';
+            dataSender.sendRaw(msg);
         });
     }
 
-    const btnNewFile = Array.from(document.querySelectorAll("button.btn-primary")).find(b => b.textContent.includes("Neue Datei erstellen"));
-    const btnUpload = Array.from(document.querySelectorAll("button.btn-secondary")).find(b => b.textContent.includes("Datei hochladen"));
-    const btnVersionen = Array.from(document.querySelectorAll("button.btn-info")).find(b => b.textContent.includes("Versionen"));
-    const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary")).find(b => b.textContent.includes("Bearbeiten"));
-
-    if (btnNewFile) btnNewFile.addEventListener("click", () => {
-        const newConfigName = "newConfig.json";
-
-        sendRequest("new_config", {
-            service: "defaultService", 
-            config: "newConfig.json"
+    // Action Handling
+    const btnNewFile = Array.from(document.querySelectorAll("button.btn-primary"))
+        .find(b => b.textContent.includes("Neue Datei erstellen"));
+    if (btnNewFile) {
+        btnNewFile.addEventListener("click", () => {
+            const newConfigName = "newConfig.json";
+            service.sendRequest({
+                module: "fm",
+                function: "new_config",
+                data: { service: serviceName, config: newConfigName }
+            });
+            logMessage(`Neue Datei erstellt: ${newConfigName}`);
+            loadFileList();
         });
+    }
 
-        logMessage(`Neue Konfigurationsdatei angelegt: ${newConfigName}`);
-    });
-
-    if (btnUpload) btnUpload.addEventListener("click", () => {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.onchange = () => {
-            const file = fileInput.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                const content = reader.result;
-
-                sendRequest("upload_config", {
-                    service: "defaultService",
-                    config: file.name,
-                    content: content
-                });
-
-                logMessage(`Datei hochgeladen: ${file.name}`);
-
-                const ul = dataTree.querySelector("ul.file-list");
-                if (ul) {
-                    const li = document.createElement("li");
-                    const fileBtn = document.createElement("button");
-                    fileBtn.className = "file-item";
-                    fileBtn.dataset.filename = file.name;
-                    fileBtn.textContent = `📄 ${file.name}`;
-
-                    const delBtn = document.createElement("button");
-                    delBtn.className = "delete-btn btn btn-sm btn-danger";
-                    delBtn.textContent = "×";
-                    delBtn.title = "Löschen";
-
-                    li.appendChild(fileBtn);
-                    li.appendChild(delBtn);
-                    ul.appendChild(li);
-
-                    initFileList(); 
-                }
+    const btnUpload = Array.from(document.querySelectorAll("button.btn-secondary"))
+        .find(b => b.textContent.includes("Datei hochladen"));
+    if (btnUpload) {
+        btnUpload.addEventListener("click", () => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.onchange = () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    service.sendRequest({
+                        module: "fm",
+                        function: "upload_config",
+                        data: { service: serviceName, config: file.name, content: reader.result }
+                    });
+                    logMessage(`Datei hochgeladen: ${file.name}`);
+                    loadFileList();
+                };
+                reader.readAsText(file);
             };
-            reader.readAsText(file);
-        };
-        fileInput.click();
-    });
+            fileInput.click();
+        });
+    }
 
+    const btnVersionen = Array.from(document.querySelectorAll("button.btn-info"))
+        .find(b => b.textContent.includes("Versionen"));
+    if (btnVersionen) btnVersionen.addEventListener("click", () => window.location.href = "versionen.html");
+
+    const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary"))
+        .find(b => b.textContent.includes("Bearbeiten"));
     if (btnBearbeiten) {
         btnBearbeiten.addEventListener("click", () => {
-            const configName = form?.dataset.config || selectedFileField?.value;
-
+            const configName = selectedFileField.value;
             const items = {
                 booleanOption: document.getElementById("boolean-option")?.checked,
                 serverName: document.getElementById("string-field")?.value,
                 port: parseInt(document.getElementById("number-picker")?.value, 10),
                 validUntil: document.getElementById("date-picker")?.value
             };
-
-            const requestData = {
-                service: "defaultService",
-                config: configName,
-                items: items,
-                validate: true
-            };
-
-            sendRequest("write_config", requestData);
-            logMessage(`Konfigurationsdatei "${configName}" wurde über "Bearbeiten" gespeichert.`);
+            service.sendRequest({
+                module: "fm",
+                function: "write_config",
+                data: { service: serviceName, config: configName, items, validate: true }
+            });
+            logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
         });
     }
 
-    if (btnVersionen) btnVersionen.addEventListener("click", () => window.location.href = "versionen.html");
-
+    // Init Files list
     loadFileList();
-    dataSender.onLog = logMessage;
 });
