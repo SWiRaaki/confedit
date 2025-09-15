@@ -7,8 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleLoginResponse = (msg) => {
         try {
             const response = JSON.parse(msg.data);
+            console.log( "Handling Response", response );
 
             if (response.code === 0 && response.data?.auth) {
+                console.log( "auth success" );
                 localStorage.setItem("authToken", response.data.auth);
 
                 hint.textContent = "Login erfolgreich. Weiterleitung...";
@@ -18,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     window.location.href = "main.html";
                 }, 1000);
             } else {
+                console.error( "auth error" );
                 hint.textContent = response.errors?.[0]?.msg || "Login fehlgeschlagen.";
                 hint.className = "hint error";
             }
