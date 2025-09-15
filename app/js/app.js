@@ -6,8 +6,8 @@ async function loadUsers() {
             module: "admin",
             function: "list_users",
             data: {
-				auth: localStorage.getItem( "authToken" )
-			}
+                auth: localStorage.getItem("authToken")
+            }
         });
 
         if (response && response.code === 0 && response.data && response.data.groups) {
@@ -99,7 +99,7 @@ async function loadUserGroups(userUid) {
             data: {
                 auth: localStorage.getItem("authToken"),
                 uid: userUid
-                            }
+            }
         });
 
         if (response && response.code === 0 && response.data && response.data.groups) {
@@ -504,7 +504,7 @@ async function loadGroupsForSelect(selectElement) {
             function: "list_groups",
             data: {
                 auth: localStorage.getItem("authToken")
-}
+            }
         });
 
         if (response && response.code === 0 && response.data && response.data.groups) {
