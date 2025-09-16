@@ -9,6 +9,7 @@ internal record ReadResult( WebSocketMessageType Type, byte[] Data );
 internal class Client {
 	internal Client( WebSocket socket ) {
 		mySocket = socket;
+		mySerializerSettings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
 	}
 
 	internal async Task Handle() {
@@ -25,7 +26,7 @@ internal class Client {
 					Response response;
 					HandleRequest( request, out response );
 
-					text = JsonConvert.SerializeObject( response );
+					text = JsonConvert.SerializeObject( response, mySerializerSettings );
                     byte[] responseBytes = Encoding.UTF8.GetBytes( text );
                     await mySocket.SendAsync( new ArraySegment<byte>( responseBytes ), WebSocketMessageType.Text, true, CancellationToken.None );
 					Console.WriteLine( $"[{ID}]: Responded: '{text}'" );
@@ -144,4 +145,5 @@ internal class Client {
 	internal Guid ID { get; set; }
 	
 	private WebSocket mySocket;
+	private JsonSerializerSettings mySerializerSettings;
 }
