@@ -572,6 +572,42 @@ Dies ist eine simplifizierte API-Referenz der aktuell implementierten Module und
 ```json
 { "module": "fm", "code": -3, "errors": [{ "code": -3, "msg": "No provider known to read .json-configurations" }], "data": {} }
 ```
+### `create_config`
+
+**Zweck:** Neue Konfiguration erstellen.
+
+**Request**
+
+```json
+{ "module": "fm", "function": "create_config", "data": { "auth": "<jwt>", "service": "ark_server", "config": "gameusersettings.xml" } }
+```
+
+**Erfolg (Struktur)**
+
+```json
+{
+  "module": "fm",
+  "code": 0,
+  "data": {
+    "service": "ark_server"
+    "config": "gameusersettings.xml",
+    "uid": "7f9a...",
+  },
+  "errors": []
+}
+```
+
+**Fehler – keine Leserechte**
+
+```json
+{ "module": "fm", "code": -5, "errors": [{ "code": -2, "msg": "Not authorized to create configuration ark_server:gameusersettings.xml" }], "data": {} }
+```
+
+**Fehler – Provider unbekannt (Endung)**
+
+```json
+{ "module": "fm", "code": -3, "errors": [{ "code": -3, "msg": "No provider known to read .xml-configurations" }], "data": {} }
+```
 
 ### `write_config`
 
@@ -609,6 +645,40 @@ Dies ist eine simplifizierte API-Referenz der aktuell implementierten Module und
 
 ```json
 { "module": "fm", "code": -6, "errors": [{ "code": -2, "msg": "Failed to write configuration: [<code>]<message>" }], "data": {} }
+```
+
+### `delete_config`
+
+**Zweck:** Konfiguration löschen
+
+**Request**
+
+```json
+{ "module": "fm", "function": "delete_config", "data": { "auth": "<jwt>", "service": "ark_server", "config": "gameusersettings.xml" } }
+```
+
+**Erfolg (Struktur)**
+
+```json
+{
+  "module": "fm",
+  "code": 0,
+  "data": {
+  },
+  "errors": []
+}
+```
+
+**Fehler – keine Leserechte**
+
+```json
+{ "module": "fm", "code": -5, "errors": [{ "code": -2, "msg": "Not authorized to delete configuration ark_server:gameusersettings.xml" }], "data": {} }
+```
+
+**Fehler – Provider unbekannt (Endung)**
+
+```json
+{ "module": "fm", "code": -3, "errors": [{ "code": -3, "msg": "No provider known to delete .xml-configurations" }], "data": {} }
 ```
 
 ---
