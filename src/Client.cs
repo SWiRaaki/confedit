@@ -9,7 +9,9 @@ internal record ReadResult( WebSocketMessageType Type, byte[] Data );
 internal class Client {
 	internal Client( WebSocket socket ) {
 		mySocket = socket;
-		mySerializerSettings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
+		mySerializerSettings = new JsonSerializerSettings() {
+			NullValueHandling = NullValueHandling.Ignore
+		};
 	}
 
 	internal async Task Handle() {
