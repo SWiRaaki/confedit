@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             logMessage("❌ Fehler beim Laden der Liste: " + err.message);
         }
-		initSearch()
+        initSearch()
     }
 
     // fm.get_config
@@ -210,15 +210,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnNewFile = Array.from(document.querySelectorAll("button.btn-primary"))
         .find(b => b.textContent.includes("Neue Datei erstellen"));
     if (btnNewFile) {
-        btnNewFile.addEventListener("click", () => {
-            const newConfigName = "newConfig.json";
-            service.sendRequest({
-                module: "fm",
-                function: "new_config",
-                data: { service: serviceName, config: newConfigName }
-            });
-            logMessage(`Neue Datei erstellt: ${newConfigName}`);
-            loadFileList();
+        btnNewFile.addEventListener("click", async () => {
+            const fileName = prompt("Bitte geben Sie den Namen der neuen Konfigurationsdatei ein:", "neue_konfiguration.json");
+            if (!fileName) return;
+
+            try {
+                const response = await service.sendRequest({
+                    module: "fm",
+                    function: "create_config",
+                    data: {
+                        service: serviceName,
+                        config: fileName
+                    }
+                });
+
+                if (response && response.code === 0) {
+                    logMessage(`✅ Neue Konfigurationsdatei "${fileName}" erfolgreich erstellt.`);
+                    loadFileList();
+                } else {
+                    logMessage(`❌ Fehler beim Erstellen der Datei: ${response?.errors?.[0]?.msg || 'Unbekannter Fehler'}`);
+                }
+            } catch (error) {
+                logMessage(`❌ Fehler beim Erstellen der Datei: ${error.message}`);
+            }
         });
     }
 

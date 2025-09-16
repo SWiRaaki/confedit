@@ -10,8 +10,8 @@ async function loadUsers() {
             }
         });
 
-        if (response && response.code === 0 && response.data && response.data.groups) {
-            populateUserTable(response.data.groups);
+        if (response && response.code === 0 && response.data && response.data.users) {
+            populateUserTable(response.data.users);
         } else {
             console.error("Failed to load users:", response);
         }
@@ -105,9 +105,21 @@ async function loadUserGroups(userUid) {
         if (response && response.code === 0 && response.data && response.data.groups) {
             const groupsSpan = document.getElementById(`groups-${userUid}`);
             if (groupsSpan) {
-                groupsSpan.innerHTML = response.data.groups.map(groupUid =>
-                    `<span class="badge badge-info">${groupUid}</span>`
-                ).join(" ");
+                // Get group names from the group table data
+                const groupTable = document.querySelector("#group-table tbody");
+                const groupRows = groupTable ? groupTable.querySelectorAll("tr") : [];
+
+                groupsSpan.innerHTML = response.data.groups.map(groupUid => {
+                    // Find the group name by UID in the group table
+                    for (let row of groupRows) {
+                        if (row.dataset.uid === groupUid) {
+                            const groupName = row.cells[0].textContent.trim();
+                            return `<span class="badge badge-info">${groupName}</span>`;
+                        }
+                    }
+                    // Fallback: show UID if group not found
+                    return `<span class="badge badge-secondary">${groupUid}</span>`;
+                }).join(" ");
             }
         }
     } catch (error) {
