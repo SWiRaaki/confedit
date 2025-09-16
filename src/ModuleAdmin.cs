@@ -21,17 +21,6 @@ internal class AdminGetUserRequestData {
 	internal string UID { get; set; } = "";
 }
 
-internal class AdminGetUserResponseData {
-	[JsonProperty("uid")]
-	internal string UID { get; set; } = "";
-
-	[JsonProperty("name")]
-	internal string Name { get; set; } = "";
-
-	[JsonProperty("abbreviation")]
-	internal string Abbreviation { get; set; } = "";
-}
-
 internal class AdminCreateUserRequestData {
 	[JsonProperty("auth", Required = Required.Always)]
 	internal string Auth { get; set; } = "";
@@ -100,7 +89,7 @@ internal class AdminListGroupsRequestData {
 
 internal class AdminListGroupsResponseData {
 	[JsonProperty("groups")]
-	internal List<(string UID, string Name, string Abbreviation, string Description)> Groups { get; set; } = new();
+	internal List<StdGroup> Groups { get; set; } = new();
 }
 
 internal class AdminGetGroupRequestData {
@@ -202,7 +191,7 @@ internal class AdminListUserGroupsRequestData {
 
 internal class AdminListUserGroupsResponseData {
 	[JsonProperty("groups")]
-	internal List<string> Groups { get; set; } = new();
+	internal List<StdGroup> Groups { get; set; } = new();
 }
 
 internal class AdminListGroupUsersRequestData {
@@ -215,7 +204,7 @@ internal class AdminListGroupUsersRequestData {
 
 internal class AdminListGroupUsersResponseData {
 	[JsonProperty("users")]
-	internal List<string> Users { get; set; } = new();
+	internal List<StdUser> Users { get; set; } = new();
 }
 
 internal class AdminAddUserToGroupRequestData {
@@ -247,7 +236,7 @@ internal class AdminListServicesRequestData {
 
 internal class AdminListServicesResponseData {
 	[JsonProperty("services")]
-	internal List<(string UID, string Name, string Abbreviation, string Description)> Services { get; set; } = new();
+	internal List<StdScope> Services { get; set; } = new();
 }
 
 internal class ModuleAdmin : Module {
@@ -282,10 +271,12 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminListUsersRequestData reqdata = request.Data.ToObject<AdminListUsersRequestData>()!;
+		AdminListUsersRequestData reqdata = request.Data.ToObject<AdminListUsersRequestData>();
 		AdminListUsersResponseData respdata;
 
-		if ( reqdata == null ) {
+		if (
+			string.IsNullOrWhiteSpace( reqdata.Auth )
+		) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
@@ -372,7 +363,6 @@ internal class ModuleAdmin : Module {
 		}
 
 		AdminGetUserRequestData reqdata = request.Data.ToObject<AdminGetUserRequestData>()!;
-		AdminGetUserResponseData respdata;
 
 		if ( reqdata == null ) {
 			response = new Response() {
@@ -424,7 +414,6 @@ internal class ModuleAdmin : Module {
 				};
 				return false;
 			}
-			respdata = new();
 			if ( selected.Data!.Rows.Count == 0 ) {
 				response = new Response() {
 					Module = Name,
@@ -435,7 +424,8 @@ internal class ModuleAdmin : Module {
 				};
 				return false;
 			}
-			respdata = new() {
+
+			var respdata = new StdUser() {
 				UID = (string)selected.Data!.Rows[0]["uuid"],
 				Name = (string)selected.Data!.Rows[0]["name"],
 				Abbreviation = (string)selected.Data!.Rows[0]["abbreviation"]
@@ -807,12 +797,12 @@ internal class ModuleAdmin : Module {
 
 			respdata = new();
 			foreach( DataRow row in selected.Data!.Rows ) {
-				respdata.Groups.Add( (
-					(string)row["uuid"],
-					(string)row["name"],
-					(string)row["abbreviation"],
-					(string)row["description"]
-				) );
+				respdata.Groups.Add( new StdGroup() {
+					UID = (string)row["uuid"],
+					Name = (string)row["name"],
+					Abbreviation = (string)row["abbreviation"],
+					Description = (string)row["description"]
+				} );
 			}
 
 			response = new Response() {
@@ -1285,7 +1275,9 @@ internal class ModuleAdmin : Module {
 
 			respdata = new();
 			foreach( DataRow row in selected.Data!.Rows ) {
-				respdata.Groups.Add( (string)row["uuid"] );
+				respdata.Groups.Add( new StdGroup() {
+					UID = (string)row["uuid"]
+				} );
 			}
 
 			response = new Response() {
@@ -1370,7 +1362,9 @@ internal class ModuleAdmin : Module {
 
 			respdata = new();
 			foreach( DataRow row in selected.Data!.Rows ) {
-				respdata.Users.Add( (string)row["uuid"] );
+				respdata.Users.Add( new StdUser() {
+					UID = (string)row["uuid"]
+				} );
 			}
 
 			response = new Response() {
