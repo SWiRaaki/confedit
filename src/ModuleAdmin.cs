@@ -606,7 +606,7 @@ internal class ModuleAdmin : Module {
 			var placeholder = new Dictionary<string, string>();
 			placeholder.Add( "SETLIST", string.Join( ", ", setlist ) );
 			var updated = Program.Script.RunScript(
-					"admin_update_user.sql",
+					"sql/admin_update_user.sql",
 					placeholder,
 					("@uuid", reqdata.UID),
 					("@name", reqdata.Name ?? ""),
@@ -701,7 +701,7 @@ internal class ModuleAdmin : Module {
 
 		try {
 			var deleted = Program.Script.RunScript(
-					"admin_delete_user.sql",
+					"sql/admin_delete_user.sql",
 					null,
 					("@uuid", reqdata.UID)
 			);
@@ -1179,7 +1179,7 @@ internal class ModuleAdmin : Module {
 
 		try {
 			var deleted = Program.Script.RunScript(
-					"admin_delete_group.sql",
+					"sql/admin_delete_group.sql",
 					null,
 					("@uuid", reqdata.UID)
 			);
