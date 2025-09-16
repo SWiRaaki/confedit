@@ -1083,7 +1083,7 @@ internal class ModuleAdmin : Module {
 			var placeholder = new Dictionary<string, string>();
 			placeholder.Add( "SETLIST", string.Join( ", ", setlist ) );
 			var updated = Program.Script.RunScript(
-					"admin_update_group.sql",
+					"sql/admin_update_group.sql",
 					placeholder,
 					("@uuid", reqdata.UID),
 					("@name", reqdata.Name ?? ""),
