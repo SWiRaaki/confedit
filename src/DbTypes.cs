@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 
 #pragma warning disable 0649
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdDbver {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -23,6 +24,7 @@ internal struct StdDbver {
 	internal DateTimeOffset? ExecutedAt;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdUser {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -40,6 +42,7 @@ internal struct StdUser {
 	internal string? Security;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdGroup {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -57,6 +60,7 @@ internal struct StdGroup {
 	internal string? Description;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdUserGroup {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -71,6 +75,7 @@ internal struct StdUserGroup {
 	internal long? GroupSerial;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdAccess {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -85,6 +90,7 @@ internal struct StdAccess {
 	internal string? Description;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdRule {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -99,6 +105,7 @@ internal struct StdRule {
 	internal string? Namespace;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdScope {
 	[JsonProperty("serial")]
 	internal long? Serial;
@@ -113,6 +120,7 @@ internal struct StdScope {
 	internal string? Namespace;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal struct StdAuth {
 	[JsonProperty("serial")]
 	internal long? Serial;

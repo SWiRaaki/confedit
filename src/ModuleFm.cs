@@ -4,6 +4,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class Config {
 	[JsonProperty("service", Required = Required.Always)]
 	internal string Service { get; set; } = "";
@@ -17,6 +18,7 @@ internal class FmGetListRequestData {
 	internal string Auth { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class FmGetListResponseData {
 	[JsonProperty("configurations")]
 	internal List<Config> Configurations { get; set; } = new();
@@ -44,6 +46,7 @@ internal class FmCreateConfigRequestData {
 	internal string Configuration { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class FmCreateConfigResponseData {
 	[JsonProperty("service")]
 	internal string Service { get; set; } = "";

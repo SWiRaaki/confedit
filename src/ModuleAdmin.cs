@@ -8,6 +8,7 @@ internal class AdminListUsersRequestData {
 	internal string Auth { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminListUsersResponseData {
 	[JsonProperty("users")]
 	internal List<StdUser> Users { get; set; } = new();
@@ -35,6 +36,7 @@ internal class AdminCreateUserRequestData {
 	internal string Security { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminCreateUserResponseData {
 	[JsonProperty("uid", Required = Required.Always)]
 	internal string UID { get; set; } = "";
@@ -63,6 +65,7 @@ internal class AdminUpdateUserRequestData {
 	internal string? Security { get; set; } = null;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminUpdateUserResponseData {
 	[JsonProperty("uid")]
 	internal string UID { get; set; } = "";
@@ -87,6 +90,7 @@ internal class AdminListGroupsRequestData {
 	internal string Auth { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminListGroupsResponseData {
 	[JsonProperty("groups")]
 	internal List<StdGroup> Groups { get; set; } = new();
@@ -100,6 +104,7 @@ internal class AdminGetGroupRequestData {
 	internal string UID { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminGetGroupResponseData {
 	[JsonProperty("uid")]
 	internal string UID { get; set; } = "";
@@ -128,6 +133,7 @@ internal class AdminCreateGroupRequestData {
 	internal string Description { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminCreateGroupResponseData {
 	[JsonProperty("uid")]
 	internal string UID { get; set; } = "";
@@ -159,6 +165,7 @@ internal class AdminUpdateGroupRequestData {
 	internal string? Description { get; set; } = null;
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminUpdateGroupResponseData {
 	[JsonProperty("uid")]
 	internal string UID { get; set; } = "";
@@ -189,6 +196,7 @@ internal class AdminListUserGroupsRequestData {
 	internal string UID { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminListUserGroupsResponseData {
 	[JsonProperty("groups")]
 	internal List<StdGroup> Groups { get; set; } = new();
@@ -202,6 +210,7 @@ internal class AdminListGroupUsersRequestData {
 	internal string UID { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AdminListGroupUsersResponseData {
 	[JsonProperty("users")]
 	internal List<StdUser> Users { get; set; } = new();
@@ -227,16 +236,6 @@ internal class AdminRemoveUserFromGroupRequestData {
 
 	[JsonProperty("group_uid", Required = Required.Always)]
 	internal string GroupUID { get; set; } = "";
-}
-
-internal class AdminListServicesRequestData {
-	[JsonProperty("auth", Required = Required.Always)]
-	internal string Auth { get; set; } = "";
-}
-
-internal class AdminListServicesResponseData {
-	[JsonProperty("services")]
-	internal List<StdScope> Services { get; set; } = new();
 }
 
 internal class ModuleAdmin : Module {

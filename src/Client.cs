@@ -28,7 +28,7 @@ internal class Client {
 					Response response;
 					HandleRequest( request, out response );
 
-					text = JsonConvert.SerializeObject( response, mySerializerSettings );
+					text = JsonConvert.SerializeObject( response, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore } );
                     byte[] responseBytes = Encoding.UTF8.GetBytes( text );
                     await mySocket.SendAsync( new ArraySegment<byte>( responseBytes ), WebSocketMessageType.Text, true, CancellationToken.None );
 					Console.WriteLine( $"[{ID}]: Responded: '{text}'" );

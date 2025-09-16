@@ -138,16 +138,10 @@ internal class AuthLoginRequestData {
 	internal string GrantType { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AuthLoginResponseData {
 	[JsonProperty("auth")]
 	internal string Auth { get; set; } = "";
-}
-
-internal class AuthRegisterUserRequestData {
-}
-
-internal class AuthRegisterUserResponseData {
-
 }
 
 internal class ModuleAuth : Module {
