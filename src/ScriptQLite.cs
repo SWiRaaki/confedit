@@ -49,7 +49,7 @@ internal class ScriptQLite : Script {
 		Console.WriteLine( $"Script (raw):\n{script}\n---" );
 		if ( placeholder != null ) {
 			foreach( var pair in placeholder ) {
-				var pholderregex = new Regex( @"(.*?)(?<!\\)(?\[\{)(" + pair.Key + @")(?\}\])(.*)" );
+				var pholderregex = new Regex( @"(.*?)(?<!\\)(?:\[\{)(" + pair.Key + @")(?:\}\])(.*)" );
 				Console.WriteLine( $"Key: {pair.Key}; Value: {pair.Value}" );
 				while( pholderregex.IsMatch( script ) ) {
 					script = pholderregex.Replace(
