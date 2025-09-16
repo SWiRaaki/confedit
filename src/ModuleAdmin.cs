@@ -271,7 +271,7 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminListUsersRequestData reqdata = request.Data.ToObject<AdminListUsersRequestData>();
+		AdminListUsersRequestData reqdata = request.Data.ToObject<AdminListUsersRequestData>()!;
 		AdminListUsersResponseData respdata;
 
 		if (

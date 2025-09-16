@@ -5,126 +5,126 @@ using Newtonsoft.Json.Linq;
 
 internal struct StdDbver {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("major")]
-	internal long Major;
+	internal long? Major;
 
 	[JsonProperty("minor")]
-	internal long Minor;
+	internal long? Minor;
 
 	[JsonProperty("patch")]
-	internal long Patch;
+	internal long? Patch;
 
 	[JsonProperty("script_version")]
-	internal string ScriptVersion;
+	internal string? ScriptVersion;
 
 	[JsonProperty("run_at")]
-	internal DateTimeOffset ExecutedAt;
+	internal DateTimeOffset? ExecutedAt;
 }
 
 internal struct StdUser {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("name")]
-	internal string Name;
+	internal string? Name;
 
 	[JsonProperty("abbreviation")]
-	internal string Abbreviation;
+	internal string? Abbreviation;
 
 	[JsonProperty("security")]
-	internal string Security;
+	internal string? Security;
 }
 
 internal struct StdGroup {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("name")]
-	internal string Name;
+	internal string? Name;
 
 	[JsonProperty("abbreviation")]
-	internal string Abbreviation;
+	internal string? Abbreviation;
 
 	[JsonProperty("description")]
-	internal string Description;
+	internal string? Description;
 }
 
 internal struct StdUserGroup {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("user_serial")]
-	internal long UserSerial;
+	internal long? UserSerial;
 
 	[JsonProperty("group_serial")]
-	internal long GroupSerial;
+	internal long? GroupSerial;
 }
 
 internal struct StdAccess {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("bit")]
-	internal long Bitflag;
+	internal long? Bitflag;
 
 	[JsonProperty("description")]
-	internal string Description;
+	internal string? Description;
 }
 
 internal struct StdRule {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("name")]
-	internal string Name;
+	internal string? Name;
 
 	[JsonProperty("namespace")]
-	internal string Namespace;
+	internal string? Namespace;
 }
 
 internal struct StdScope {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("name")]
-	internal string Name;
+	internal string? Name;
 
 	[JsonProperty("namespace")]
-	internal string Namespace;
+	internal string? Namespace;
 }
 
 internal struct StdAuth {
 	[JsonProperty("serial")]
-	internal long Serial;
+	internal long? Serial;
 
 	[JsonProperty("uid")]
-	internal string UID;
+	internal string? UID;
 
 	[JsonProperty("accessee")]
-	internal string Accessee;
+	internal string? Accessee;
 
 	[JsonProperty("scope_serial")]
-	internal long ScopeSerial;
+	internal long? ScopeSerial;
 
 	[JsonProperty("rule_serial")]
 	internal long? RuleSerial;

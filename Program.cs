@@ -97,7 +97,9 @@ internal static class Program
 				var rsx = context.Request.Url!.AbsolutePath;
 				if ( rsx == "/rest-test" ) {
 					byte[] body_data = new byte[context.Request.ContentLength64];
-					context.Request.InputStream.Read( body_data );
+					var read = context.Request.InputStream.Read( body_data, 0, body_data.Length );
+					if ( read == 0 )
+						continue;
 					var body = Encoding.UTF8.GetString( body_data );
 					Console.WriteLine( body );
 					context.Response.StatusCode = 200;
@@ -113,7 +115,9 @@ internal static class Program
 				}
 				else if ( rsx == "/rest-test" ) {
 					byte[] body_data = new byte[context.Request.ContentLength64];
-					context.Request.InputStream.Read( body_data );
+					var read = context.Request.InputStream.Read( body_data, 0, body_data.Length );
+					if ( read == 0 )
+						continue;
 					var body = Encoding.UTF8.GetString( body_data );
 					Console.WriteLine( body );
 					context.Response.StatusCode = 200;
