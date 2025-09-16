@@ -1261,7 +1261,11 @@ internal class ModuleAdmin : Module {
 		}
 
 		try {
-			var selected = Program.Script.RunScript( "sql/admin_list_user_groups.sql", null );
+			var selected = Program.Script.RunScript(
+				"sql/admin_list_user_groups.sql",
+				null,
+				("@uuid", reqdata.UID)
+			);
 			if ( !selected ) {
 				response = new Response() {
 					Module = Name,
@@ -1348,7 +1352,11 @@ internal class ModuleAdmin : Module {
 		}
 
 		try {
-			var selected = Program.Script.RunScript( "sql/admin_list_group_users.sql", null );
+			var selected = Program.Script.RunScript(
+				"sql/admin_list_group_users.sql",
+				null,
+				("@uuid", reqdata.UID)
+			);
 			if ( !selected ) {
 				response = new Response() {
 					Module = Name,
