@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("datei-suche");
     const dataTree = document.getElementById("data-tree");
     const selectedFileField = document.getElementById("selected-file");
+    const btnAddField = document.getElementById("btnAddField");
 
     const serviceName = window.currentService || "web";
 
@@ -356,20 +357,83 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary"))
         .find(b => b.textContent.includes("Bearbeiten"));
     if (btnBearbeiten) {
-        btnBearbeiten.addEventListener("click", () => {
+        btnBearbeiten.addEventListener("click", async () => {
             const configName = selectedFileField.value;
-            const items = {
-                booleanOption: document.getElementById("boolean-option")?.checked,
-                serverName: document.getElementById("string-field")?.value,
-                port: parseInt(document.getElementById("number-picker")?.value, 10),
-                validUntil: document.getElementById("date-picker")?.value
-            };
+            const items = collectFormData(); // Collect all fields -> extended fields too
+
+            //const items = {
+            //    booleanOption: document.getElementById("boolean-option")?.checked,
+            //    serverName: document.getElementById("string-field")?.value,
+            //    port: parseInt(document.getElementById("number-picker")?.value, 10),
+            //    validUntil: document.getElementById("date-picker")?.value
+            //};
+
             service.sendRequest({
                 module: "fm",
                 function: "write_config",
                 data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
             });
             logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
+        });
+    }
+
+    // add extended fields (supported field types are text, checkbox (bool), dateinput)
+    if (btnAddField) {
+        btnAddField.addEventListener("click", () => {
+            const formContainer = document.querySelector('#configForm fieldset');
+
+            const fieldName = prompt("Name des neuen Feldes?");
+            if (!fieldName) return;
+
+            let fieldType = prompt("Feldtyp wählen: text | checkbox | date", "text");
+            fieldType = (fieldType || "text").toLowerCase();
+
+            const fieldId = `field-${fieldName.toLowerCase().replace(/\s+/g, '-')}`;
+
+            const fieldDiv = document.createElement("div");
+            fieldDiv.className = "form-group d-flex align-items-center";
+            fieldDiv.style.gap = "0.5rem"; 
+
+            let inputElement = "";
+            switch (fieldType) {
+                case "checkbox":
+                    inputElement = `
+                    <div class="form-check" style="flex:1;">
+                        <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input">
+                        <label for="${fieldId}" class="form-check-label">${fieldName}</label>
+                    </div>`;
+                    break;
+
+                case "date":
+                    inputElement = `
+                    <div style="flex:1;">
+                        <label for="${fieldId}">${fieldName}:</label>
+                        <input type="date" id="${fieldId}" name="${fieldId}" class="form-control">
+                    </div>`;
+                    break;
+
+                case "text":
+                default:
+                    inputElement = `
+                    <div style="flex:1;">
+                        <label for="${fieldId}">${fieldName}:</label>
+                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control">
+                    </div>`;
+                    break;
+            }
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "delete-user";
+            deleteBtn.innerText = "×";
+            deleteBtn.title = "Feld löschen";
+            deleteBtn.addEventListener("click", () => {
+                fieldDiv.remove();
+            });
+
+            fieldDiv.innerHTML = inputElement;
+            fieldDiv.appendChild(deleteBtn);
+
+            formContainer.insertBefore(fieldDiv, btnAddField.parentElement);
         });
     }
 
