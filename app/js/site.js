@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dataTree = document.getElementById("data-tree");
     const selectedFileField = document.getElementById("selected-file");
 
-    const serviceName = window.currentService || "defaultService";
+    const serviceName = window.currentService || "web";
 
     service.authenticate();
 
@@ -29,10 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const resp = await service.sendRequest({
                 module: "fm",
                 function: "get_list",
-                data: {}
+                data: {
+                    auth: localStorage.getItem("authToken"),
+                    service: serviceName
+                }
             });
 
-            if (!resp || !resp.data) {
+            if (!resp || !resp.data || !resp.data.configurations) {
                 logMessage("⚠️ Keine Dateien gefunden.");
                 return;
             }
@@ -40,7 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const ul = document.createElement("ul");
             ul.className = "file-list";
 
-            resp.data.forEach(filename => {
+            resp.data.configurations.forEach(config => {
+                const filename = config.config;
                 const li = document.createElement("li");
 
                 const fileBtn = document.createElement("button");
@@ -67,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         service.sendRequest({
                             module: "fm",
                             function: "delete_config",
-                            data: { service: serviceName, config: filename }
+                            data: { auth: localStorage.getItem("authToken"), service: serviceName, config: filename }
                         });
                     }
                 });
@@ -91,7 +95,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const resp = await service.sendRequest({
                 module: "fm",
                 function: "get_config",
-                data: { filename }
+                data: {
+                    auth: localStorage.getItem("authToken"),
+                    service: serviceName,
+                    config: filename
+                }
             });
 
             if (!resp || !resp.data) {
@@ -100,20 +108,99 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             selectedFileField.value = filename;
-            if (resp.data.serverName) {
-                document.getElementById("string-field").value = resp.data.serverName;
-            }
-            if (resp.data.port) {
-                document.getElementById("number-picker").value = resp.data.port;
-            }
-            if (resp.data.enabled !== undefined) {
-                document.getElementById("boolean-option").checked = resp.data.enabled;
+
+            // Clear existing form content
+            const formContainer = document.querySelector('#configForm fieldset');
+            const existingFields = formContainer.querySelectorAll('.form-group:not(:first-child)');
+            existingFields.forEach(field => field.remove());
+
+            // Generate form fields from config tree
+            if (resp.data.items && Array.isArray(resp.data.items)) {
+                generateFormFields(resp.data.items, formContainer);
             }
 
             logMessage(`✅ Datei geladen: ${filename}`);
         } catch (err) {
             logMessage(`❌ Fehler beim Laden von ${filename}: ${err.message}`);
         }
+    }
+
+    function generateFormFields(items, container) {
+        items.forEach(item => {
+            if (item.type === 'category' && item.children && item.children.length > 0) {
+                // Create category section
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'form-group';
+                categoryDiv.innerHTML = `
+                    <legend class="text-secondary">${item.name}</legend>
+                `;
+                container.appendChild(categoryDiv);
+
+                // Generate fields for children
+                generateFormFields(item.children, container);
+            } else {
+                // Create form field based on type
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'form-group';
+
+                const fieldId = `field-${item.name.toLowerCase().replace(/\s+/g, '-')}`;
+                let fieldHTML = '';
+
+                switch (item.type) {
+                    case 'string':
+                        fieldHTML = `
+                            <label for="${fieldId}">${item.name}:</label>
+                            <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                        `;
+                        break;
+                    case 'number':
+                        fieldHTML = `
+                            <label for="${fieldId}">${item.name}:</label>
+                            <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                        `;
+                        break;
+                    case 'boolean':
+                        fieldHTML = `
+                            <div class="form-check">
+                                <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ${item.value ? 'checked' : ''}>
+                                <label for="${fieldId}" class="form-check-label">${item.name}</label>
+                            </div>
+                        `;
+                        break;
+                    default:
+                        fieldHTML = `
+                            <label for="${fieldId}">${item.name}:</label>
+                            <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                        `;
+                }
+
+                fieldDiv.innerHTML = fieldHTML;
+                container.appendChild(fieldDiv);
+            }
+        });
+    }
+
+    function collectFormData() {
+        const formContainer = document.querySelector('#configForm fieldset');
+        const fields = formContainer.querySelectorAll('input, select, textarea');
+        const data = {};
+
+        fields.forEach(field => {
+            if (field.id && field.id.startsWith('field-')) {
+                const fieldName = field.id.replace('field-', '');
+                let value = field.value;
+
+                if (field.type === 'checkbox') {
+                    value = field.checked;
+                } else if (field.type === 'number') {
+                    value = parseFloat(value) || 0;
+                }
+
+                data[fieldName] = value;
+            }
+        });
+
+        return data;
     }
 
     function initSearch() {
@@ -158,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await service.sendRequest({
                     module: "fm",
                     function: "write_config",
-                    data: { service: serviceName, config: configName, items, validate: true }
+                    data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
                 });
 
                 logMessage(`✅ Konfigurationsdatei "${configName}" gespeichert.`);
@@ -219,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     module: "fm",
                     function: "create_config",
                     data: {
+                        auth: localStorage.getItem("authToken"),
                         service: serviceName,
                         config: fileName
                     }
@@ -250,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     service.sendRequest({
                         module: "fm",
                         function: "upload_config",
-                        data: { service: serviceName, config: file.name, content: reader.result }
+                        data: { auth: localStorage.getItem("authToken"), service: serviceName, config: file.name, content: reader.result }
                     });
                     logMessage(`Datei hochgeladen: ${file.name}`);
                     loadFileList();
@@ -279,7 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
             service.sendRequest({
                 module: "fm",
                 function: "write_config",
-                data: { service: serviceName, config: configName, items, validate: true }
+                data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
             });
             logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
         });
