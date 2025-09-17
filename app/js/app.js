@@ -30,13 +30,41 @@ async function loadGroups() {
             }
         });
 
-        if (response && response.code === 0 && response.data && response.data.groups) {
-            populateGroupTable(response.data.groups);
+        console.log("Groups response:", response);
+
+        if (response && response.code === 0 && response.data) {
+            
+            const groups = response.data.groups || response.data.users || [];
+
+            // Handle tuple format (Item1, Item2, etc.)
+            const processedGroups = groups.map(group => {
+                if (group.Item1 && group.Item2 && group.Item3) {
+                    // Tuple format: Item1=uid, Item2=name, Item3=abbreviation, Item4=description
+                    return {
+                        uid: group.Item1,
+                        name: group.Item2,
+                        abbreviation: group.Item3,
+                        description: group.Item4 || ""
+                    };
+                } else if (group.uid && group.name) {
+                    // Normal object format
+                    return group;
+                } else {
+                    // Fallback: treat as is
+                    return group;
+                }
+            });
+
+            console.log("Processed groups:", processedGroups);
+            populateGroupTable(processedGroups);
+            return processedGroups; // Return groups for potential use
         } else {
             console.error("Failed to load groups:", response);
+            return [];
         }
     } catch (error) {
         console.error("Error loading groups:", error);
+        return [];
     }
 }
 
@@ -102,28 +130,55 @@ async function loadUserGroups(userUid) {
             }
         });
 
-        if (response && response.code === 0 && response.data && response.data.groups) {
-            const groupsSpan = document.getElementById(`groups-${userUid}`);
-            if (groupsSpan) {
-                // Get group names from the group table data
-                const groupTable = document.querySelector("#group-table tbody");
-                const groupRows = groupTable ? groupTable.querySelectorAll("tr") : [];
+        const groupsSpan = document.getElementById(`groups-${userUid}`);
+        if (!groupsSpan) return;
 
-                groupsSpan.innerHTML = response.data.groups.map(groupUid => {
-                    // Find the group name by UID in the group table
-                    for (let row of groupRows) {
-                        if (row.dataset.uid === groupUid) {
-                            const groupName = row.cells[0].textContent.trim();
-                            return `<span class="badge badge-info">${groupName}</span>`;
-                        }
+        console.log(`User ${userUid} groups response:`, response);
+
+        if (response && response.code === 0 && response.data && response.data.groups && response.data.groups.length > 0) {
+            // Get group names from the group table data
+            const groupTable = document.querySelector("#group-table tbody");
+            const groupRows = groupTable ? groupTable.querySelectorAll("tr") : [];
+
+            console.log(`Group table rows:`, groupRows.length);
+
+            groupsSpan.innerHTML = response.data.groups.map(groupItem => {
+                // Handle both string UIDs and object responses
+                let groupUid;
+                if (typeof groupItem === 'string') {
+                    groupUid = groupItem;
+                } else if (groupItem.Item1) {
+                    // Tuple format
+                    groupUid = groupItem.Item1;
+                } else {
+                    groupUid = groupItem.uid || groupItem;
+                }
+
+                console.log(`Processing group:`, groupItem, 'UID:', groupUid);
+
+                // Find the group name by UID in the group table
+                for (let row of groupRows) {
+                    if (row.dataset.uid === groupUid) {
+                        const groupName = row.cells[0].textContent.trim();
+                        console.log(`Found group name: ${groupName} for UID: ${groupUid}`);
+                        return `<span class="badge badge-info">${groupName}</span>`;
                     }
-                    // Fallback: show UID if group not found
-                    return `<span class="badge badge-secondary">${groupUid}</span>`;
-                }).join(" ");
-            }
+                }
+                // Fallback: show UID if group not found
+                console.log(`Group not found in table, showing UID: ${groupUid}`);
+                return `<span class="badge badge-secondary">${groupUid}</span>`;
+            }).join(" ");
+        } else {
+            // No groups or empty groups array
+            console.log(`No groups for user ${userUid}`);
+            groupsSpan.innerHTML = '<span class="text-muted">Keine Gruppen</span>';
         }
     } catch (error) {
         console.error("Error loading user groups:", error);
+        const groupsSpan = document.getElementById(`groups-${userUid}`);
+        if (groupsSpan) {
+            groupsSpan.innerHTML = '<span class="text-danger">Fehler beim Laden</span>';
+        }
     }
 }
 
@@ -431,6 +486,98 @@ function createUserModal() {
     return backdrop;
 }
 
+function createEditUserModal(userUid, currentName, currentAbbreviation) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+
+    modal.innerHTML = `
+        <div class="modal-header">
+            <h3 class="modal-title">Benutzer bearbeiten</h3>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="edit-user-name-input">Name:</label>
+                <input type="text" id="edit-user-name-input" class="form-control" value="${currentName}" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-user-abbreviation-input">Abkürzung:</label>
+                <input type="text" id="edit-user-abbreviation-input" class="form-control" value="${currentAbbreviation}" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-user-password-input">Neues Passwort (optional):</label>
+                <input type="password" id="edit-user-password-input" class="form-control" placeholder="Neues Passwort eingeben">
+                <small class="form-text text-muted">Lassen Sie das Feld leer, um das Passwort nicht zu ändern.</small>
+            </div>
+            <div class="form-group">
+                <label>Gruppenzugehörigkeiten:</label>
+                <div id="user-groups-container" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                    <div class="text-muted">Lade Gruppen...</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="cancel-edit-user" class="btn btn-secondary">Abbrechen</button>
+            <button type="button" id="save-edit-user" class="btn btn-primary">Speichern</button>
+        </div>
+    `;
+
+    backdrop.appendChild(modal);
+
+    const nameInput = modal.querySelector('#edit-user-name-input');
+    const abbreviationInput = modal.querySelector('#edit-user-abbreviation-input');
+    const passwordInput = modal.querySelector('#edit-user-password-input');
+    const groupsContainer = modal.querySelector('#user-groups-container');
+    const cancelBtn = modal.querySelector('#cancel-edit-user');
+    const saveBtn = modal.querySelector('#save-edit-user');
+
+    // Load user's current groups and all available groups
+    loadUserGroupsForEdit(userUid, groupsContainer);
+
+    setTimeout(() => nameInput.focus(), 100);
+
+    cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(backdrop);
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        const abbreviation = abbreviationInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!name || !abbreviation) {
+            alert('Bitte füllen Sie Name und Abkürzung aus.');
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Speichere...';
+
+        // Update user basic info
+        const success = await updateUser(userUid, name, abbreviation, password || null);
+
+        if (success) {
+            // Update group memberships
+            await updateUserGroupMemberships(userUid, groupsContainer);
+            document.body.removeChild(backdrop);
+        } else {
+            alert('Fehler beim Aktualisieren des Benutzers. Bitte versuchen Sie es erneut.');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Speichern';
+        }
+    });
+
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+            document.body.removeChild(backdrop);
+        }
+    });
+
+    return backdrop;
+}
+
 function createGroupModal() {
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
@@ -509,6 +656,138 @@ function createGroupModal() {
     return backdrop;
 }
 
+async function loadUserGroupsForEdit(userUid, container) {
+    try {
+        // Load all available groups
+        const groupsResponse = await service.sendRequest({
+            module: "admin",
+            function: "list_groups",
+            data: {
+                auth: localStorage.getItem("authToken")
+            }
+        });
+
+        // Load user's current groups
+        const userGroupsResponse = await service.sendRequest({
+            module: "admin",
+            function: "list_user_groups",
+            data: {
+                auth: localStorage.getItem("authToken"),
+                uid: userUid
+            }
+        });
+
+        if (groupsResponse && groupsResponse.code === 0 && groupsResponse.data) {
+            const groups = groupsResponse.data.groups || groupsResponse.data.users || [];
+            const processedGroups = groups.map(group => {
+                if (group.Item1 && group.Item2 && group.Item3) {
+                    return {
+                        uid: group.Item1,
+                        name: group.Item2,
+                        abbreviation: group.Item3,
+                        description: group.Item4 || ""
+                    };
+                } else if (group.uid && group.name) {
+                    return group;
+                } else {
+                    return group;
+                }
+            });
+
+            // Get user's current group UIDs
+            let userGroupUids = [];
+            if (userGroupsResponse && userGroupsResponse.code === 0 && userGroupsResponse.data && userGroupsResponse.data.groups) {
+                userGroupUids = userGroupsResponse.data.groups.map(groupItem => {
+                    if (typeof groupItem === 'string') {
+                        return groupItem;
+                    } else if (groupItem.Item1) {
+                        return groupItem.Item1;
+                    } else {
+                        return groupItem.uid || groupItem;
+                    }
+                });
+            }
+
+            // Create checkboxes for each group
+            container.innerHTML = '';
+            processedGroups.forEach(group => {
+                const isMember = userGroupUids.includes(group.uid);
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'form-check';
+                checkboxDiv.innerHTML = `
+                    <input type="checkbox" class="form-check-input" id="group-${group.uid}" value="${group.uid}" ${isMember ? 'checked' : ''}>
+                    <label class="form-check-label" for="group-${group.uid}">
+                        <strong>${group.name}</strong> (${group.abbreviation})
+                        ${group.description ? `<br><small class="text-muted">${group.description}</small>` : ''}
+                    </label>
+                `;
+                container.appendChild(checkboxDiv);
+            });
+
+            if (processedGroups.length === 0) {
+                container.innerHTML = '<div class="text-muted">Keine Gruppen verfügbar</div>';
+            }
+        } else {
+            container.innerHTML = '<div class="text-danger">Fehler beim Laden der Gruppen</div>';
+        }
+    } catch (error) {
+        console.error("Error loading user groups for edit:", error);
+        container.innerHTML = '<div class="text-danger">Fehler beim Laden der Gruppen</div>';
+    }
+}
+
+async function updateUserGroupMemberships(userUid, container) {
+    try {
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        const currentMemberships = new Set();
+
+        // Get current memberships from checkboxes
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                currentMemberships.add(checkbox.value);
+            }
+        });
+
+        // Get current user groups from API
+        const userGroupsResponse = await service.sendRequest({
+            module: "admin",
+            function: "list_user_groups",
+            data: {
+                auth: localStorage.getItem("authToken"),
+                uid: userUid
+            }
+        });
+
+        let existingMemberships = new Set();
+        if (userGroupsResponse && userGroupsResponse.code === 0 && userGroupsResponse.data && userGroupsResponse.data.groups) {
+            userGroupsResponse.data.groups.forEach(groupItem => {
+                const groupUid = typeof groupItem === 'string' ? groupItem :
+                    (groupItem.Item1 ? groupItem.Item1 : groupItem.uid || groupItem);
+                existingMemberships.add(groupUid);
+            });
+        }
+
+        // Add new memberships
+        for (const groupUid of currentMemberships) {
+            if (!existingMemberships.has(groupUid)) {
+                await addUserToGroup(userUid, groupUid);
+            }
+        }
+
+        // Remove old memberships
+        for (const groupUid of existingMemberships) {
+            if (!currentMemberships.has(groupUid)) {
+                await removeUserFromGroup(userUid, groupUid);
+            }
+        }
+
+        // Reload the user table to show updated group memberships
+        await loadUsers();
+    } catch (error) {
+        console.error("Error updating user group memberships:", error);
+    }
+}
+
 async function loadGroupsForSelect(selectElement) {
     try {
         const response = await service.sendRequest({
@@ -519,9 +798,25 @@ async function loadGroupsForSelect(selectElement) {
             }
         });
 
-        if (response && response.code === 0 && response.data && response.data.groups) {
+        if (response && response.code === 0 && response.data) {
+            const groups = response.data.groups || response.data.users || [];
+            const processedGroups = groups.map(group => {
+                if (group.Item1 && group.Item2 && group.Item3) {
+                    return {
+                        uid: group.Item1,
+                        name: group.Item2,
+                        abbreviation: group.Item3,
+                        description: group.Item4 || ""
+                    };
+                } else if (group.uid && group.name) {
+                    return group;
+                } else {
+                    return group;
+                }
+            });
+
             selectElement.innerHTML = '<option value="">Keine Gruppe auswählen</option>';
-            response.data.groups.forEach(group => {
+            processedGroups.forEach(group => {
                 const option = document.createElement('option');
                 option.value = group.uid;
                 option.textContent = `${group.name} (${group.abbreviation})`;
@@ -626,16 +921,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const currentName = row.cells[0].innerText.trim();
                 const currentAbbreviation = row.cells[1].innerText.trim();
 
-                const newName = prompt("Neuer Name:", currentName);
-                if (!newName) return;
-
-                const newAbbreviation = prompt("Neue Abkürzung:", currentAbbreviation);
-                if (!newAbbreviation) return;
-
-                const success = await updateUser(uid, newName, newAbbreviation, null);
-                if (!success) {
-                    alert("Fehler beim Aktualisieren des Benutzers.");
-                }
+                const modal = createEditUserModal(uid, currentName, currentAbbreviation);
+                document.body.appendChild(modal);
             }
 
             if (e.target.classList.contains("delete-user")) {
@@ -693,7 +980,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load data on page load
     if (userTable || groupTable) {
-        loadUsers();
-        loadGroups();
+        // Load groups first, then users (so group table is populated when user groups are loaded)
+        loadGroups().then(() => {
+            loadUsers();
+        });
     }
 });
