@@ -470,6 +470,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>`;
                     break;
                 case 'Integer':
+                    inputElement = `
+                    <div style="flex:1;">
+                        <label for="${fieldId}">${fieldName}:</label>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control">
+                    </div>`;
+                    break;
                 case 'Unsigned':
                 case 'Float':
                     inputElement = `
