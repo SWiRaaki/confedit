@@ -575,6 +575,7 @@ internal class ModuleFm : Module {
 					new Error( ValidationError.ProviderNotFound, $"No provider known to delete {extension}-configurations" )
 				}
 			};
+			return false;
 		}
 
 		var token = Jwt.FromString( reqdata.Auth );
