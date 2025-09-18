@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("datei-suche");
     const dataTree = document.getElementById("data-tree");
     const selectedFileField = document.getElementById("selected-file");
-    const btnAddField = document.getElementById("btnAddField");
+    const btnAddField = document.querySelector("#btnAddField");
 
     const serviceName = window.currentService || "web";
 
@@ -378,64 +378,135 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // add extended fields (supported field types are text, checkbox (bool), dateinput)
-    if (btnAddField) {
-        btnAddField.addEventListener("click", () => {
+    btnAddField.addEventListener("click", () => {
+        const dataTypes = ["Text", "Ja oder Nein", "Integer", "Unsigned", "Float", "Datum", "Bytes", "Kategorie", "Liste"];
+        const backdrop = document.createElement('div');
+        backdrop.style.position = 'fixed';
+        backdrop.style.top = 0;
+        backdrop.style.left = 0;
+        backdrop.style.width = '100%';
+        backdrop.style.height = '100%';
+        backdrop.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        backdrop.style.display = 'flex';
+        backdrop.style.justifyContent = 'center';
+        backdrop.style.alignItems = 'center';
+        backdrop.style.zIndex = 9999;
+
+        const modal = document.createElement('div');
+        modal.style.background = 'white';
+        modal.style.padding = '1rem';
+        modal.style.borderRadius = '5px';
+        modal.style.minWidth = '300px';
+        modal.style.maxWidth = '400px';
+
+        const optionsHTML = dataTypes.map(t => `<option value="${t}">${t || "(leer)"}</option>`).join('');
+
+        modal.innerHTML = `
+                            <div class="modal-header">
+                                <h3>Neues Feld hinzufügen</h3>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="new-field-name">Feldname:</label>
+                                    <input type="text" id="new-field-name" class="form-control" placeholder="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-field-type">Datentyp:</label>
+                                    <select id="new-field-type" class="form-control">
+                                        ${optionsHTML}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="margin-top:10px; text-align:right;">
+                                <button type="button" id="cancel-field" class="btn btn-secondary">Abbrechen</button>
+                                <button type="button" id="confirm-field" class="btn btn-primary">Hinzufügen</button>
+                            </div>
+                        `;
+
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        const nameInput = modal.querySelector('#new-field-name');
+        const typeSelect = modal.querySelector('#new-field-type');
+        const cancelBtn = modal.querySelector('#cancel-field');
+        const confirmBtn = modal.querySelector('#confirm-field');
+
+        nameInput.focus();
+
+        cancelBtn.addEventListener('click', () => {
+            document.body.removeChild(backdrop);
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            const fieldName = nameInput.value.trim();
+            const fieldType = typeSelect.value;
+
+            if (!fieldName) {
+                alert('Bitte einen Feldnamen eingeben!');
+                return;
+            }
+
             const formContainer = document.querySelector('#configForm fieldset');
-
-            const fieldName = prompt("Name des neuen Feldes?");
-            if (!fieldName) return;
-
-            let fieldType = prompt("Feldtyp wählen: text | checkbox | date", "text");
-            fieldType = (fieldType || "text").toLowerCase();
-
             const fieldId = `field-${fieldName.toLowerCase().replace(/\s+/g, '-')}`;
 
             const fieldDiv = document.createElement("div");
             fieldDiv.className = "form-group d-flex align-items-center";
-            fieldDiv.style.gap = "0.5rem"; 
+            fieldDiv.style.gap = "0.5rem";
 
-            let inputElement = "";
+            let inputElement = '';
             switch (fieldType) {
-                case "checkbox":
+                case 'Ja oder Nein':
                     inputElement = `
                     <div class="form-check" style="flex:1;">
                         <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input">
                         <label for="${fieldId}" class="form-check-label">${fieldName}</label>
                     </div>`;
                     break;
-
-                case "date":
+                case 'Datum':
                     inputElement = `
                     <div style="flex:1;">
                         <label for="${fieldId}">${fieldName}:</label>
                         <input type="date" id="${fieldId}" name="${fieldId}" class="form-control">
                     </div>`;
                     break;
-
-                case "text":
-                default:
+                case 'Integer':
+                case 'Unsigned':
+                case 'Float':
                     inputElement = `
                     <div style="flex:1;">
                         <label for="${fieldId}">${fieldName}:</label>
-                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control">
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control">
                     </div>`;
                     break;
+                default:
+                    inputElement = `
+                    <div style="flex:1;">
+                    <label for="${fieldId}">${fieldName}:</label>
+                    <input type="text" id="${fieldId}" name="${fieldId}" class="form-control">
+                </div>`;
             }
             const deleteBtn = document.createElement("button");
             deleteBtn.type = "button";
-            deleteBtn.className = "delete-user";
+            deleteBtn.className = "delete-user btn btn-outline-danger btn-sm";
             deleteBtn.innerText = "×";
             deleteBtn.title = "Feld löschen";
-            deleteBtn.addEventListener("click", () => {
-                fieldDiv.remove();
-            });
+            deleteBtn.addEventListener("click", () => fieldDiv.remove());
 
             fieldDiv.innerHTML = inputElement;
             fieldDiv.appendChild(deleteBtn);
 
             formContainer.insertBefore(fieldDiv, btnAddField.parentElement);
+
+            document.body.removeChild(backdrop);
         });
-    }
+
+        backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) {
+                document.body.removeChild(backdrop);
+            }
+        });
+    });
+
 
     // Init Files list
     loadFileList();
