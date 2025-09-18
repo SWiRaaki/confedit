@@ -590,20 +590,18 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
-        // TODO clarify why deleto function is not working with actual user root/admin?
 
-        //if ( !token.IsAuthorized( "service", reqdata.Service, "delete" ) &&
-        //	 !token.IsAuthorized( reqdata.Service, "any", "delete" ) &&
-        //	 !token.IsAuthorized( reqdata.Service, reqdata.Configuration, "delete" ) ) {
-        //	response = new Response() {
-        //		Module = Name,
-        //		Code = RequestError.Authorization,
-        //		Errors = {
-        //			new Error( AuthorizationError.Unauthorized, $"Not authorized to delete configuration {reqdata.Service}:{reqdata.Configuration}" )
-        //		}
-        //	};
-        //	return false;
-        //}
+        if ( !token.IsAuthorized( "service", reqdata.Service, "Delete" ) &&
+        	 !token.IsAuthorized( reqdata.Service, reqdata.Configuration, "Delete" ) ) {
+        	response = new Response() {
+        		Module = Name,
+        		Code = RequestError.Authorization,
+        		Errors = {
+        			new Error( AuthorizationError.Unauthorized, $"Not authorized to delete configuration {reqdata.Service}:{reqdata.Configuration}" )
+        		}
+        	};
+        	return false;
+        }
 
         try {
 			var path = "";
