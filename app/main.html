@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Konfigurationseditor - Hauptseite</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header>
         <nav>
             <ul>
-                <li><a href="main.html"  class="active">Datei</a></li>
+                <li><a href="main.html" class="active">Datei</a></li>
                 <li><a href="versionen.html">Versionen</a></li>
                 <li><a href="benutzer.html">Benutzer</a></li>
                 <li><a href="hilfe.html">Hilfe</a></li>
@@ -32,28 +32,7 @@
                         </div>
                         <div id="data-tree">
                             <h3>Dateien</h3>
-                            <ul class="file-list">
-                                <li>
-                                    <button class="file-item" data-filename="config_json.json">📄 config_json.json</button>
-                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
-                                </li>
-                                <li>
-                                    <button class="file-item" data-filename="config.yaml">📄 config.yaml</button>
-                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
-                                </li>
-                                <li>
-                                    <button class="file-item" data-filename="config.xml">📄 config.xml</button>
-                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
-                                </li>
-                                <li>
-                                    <button class="file-item" data-filename="config.ini">📄 config.ini</button>
-                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
-                                </li>
-                                <li>
-                                    <button class="file-item" data-filename="config.toml">📄 config.toml</button>
-                                    <button class="delete-btn btn btn-sm btn-danger" title="Löschen">×</button>
-                                </li>
-                            </ul>
+                            <!-- Dateiliste wird dynamisch geladen -->
                         </div>
                     </div>
                 </section>
@@ -74,32 +53,13 @@
                                 <legend class="text-primary">Konfiguration bearbeiten</legend>
 
                                 <div class="form-group">
-                                    <label for="boolean-option">Feature aktivieren:</label>
-                                    <input type="checkbox" id="boolean-option" name="boolean-option">
-                                </div>
-
-                                <div class="form-group">
                                     <label for="selected-file">Ausgewählte Datei:</label>
-                                    <input type="text" id="selected-file" name="selected-file" class="form-control" readonly placeholder="">
+                                    <input type="text" id="selected-file" name="selected-file" class="form-control" readonly placeholder="Wählen Sie eine Datei aus dem Dateibaum">
                                 </div>
 
+                                <!-- Dynamische Formularfelder werden hier eingefügt -->
                                 <div class="form-group">
-                                    <label for="string-field">Server Name:</label>
-                                    <input type="text" id="string-field" name="string-field" class="form-control"
-                                           placeholder="server.example.com"
-                                           data-rules="required|minLength:3|maxLength:255">
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="number-picker">Port:</label>
-                                    <input type="number" id="number-picker" name="number-picker" class="form-control"
-                                           min="1" max="65535" value="8080"
-                                           data-rules="required|checkPortServer">
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="date-picker">Gültig bis:</label>
-                                    <input type="date" id="date-picker" name="date-picker" class="form-control">
+                                    <button type="button" id="btnAddField" class="btn btn-warning" data-toggle="modal" data-target="#addFieldModal">+ Neues Feld hinzufügen</button>
                                 </div>
 
                                 <div class="d-flex justify-content-between align-items-center">
@@ -128,7 +88,7 @@
                         <button id="sendBtn" class="btn btn-primary btn-sm" disabled>Senden</button>
                     </div>
                     <pre id="log"></pre>
-                    </div>
+                </div>
 
                 <section class="card mt-4">
                     <div class="card-header">
@@ -155,7 +115,7 @@
     </main>
 
     <script src="js/errors.js"></script>
-	<script src="js/service.js"></script>
+    <script src="js/service.js"></script>
     <script src="js/dataSender.js"></script>
     <script src="js/site.js"></script>
 </body>
