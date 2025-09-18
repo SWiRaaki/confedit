@@ -60,20 +60,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 fileBtn.addEventListener("click", () => loadFileConfig(filename));
 
-                delBtn.addEventListener("click", e => {
+                delBtn.addEventListener("click", async e => {
                     e.stopPropagation();
-                    if (confirm(`Datei "${filename}" löschen?`)) {
-                        li.remove();
-                        if (selectedFileField.value === filename) {
-                            selectedFileField.value = "";
-                        }
-                        logMessage(`Datei gelöscht: ${filename}`);
 
-                        service.sendRequest({
+                    if (!confirm(`Datei "${filename}" wirklich löschen?`)) return;
+
+                    try {
+                        const response = await service.sendRequest({
                             module: "fm",
                             function: "delete_config",
-                            data: { auth: localStorage.getItem("authToken"), service: serviceName, config: filename }
+                            data: {
+                                auth: localStorage.getItem("authToken"),
+                                service: serviceName,
+                                config: filename
+                            }
                         });
+
+                        if (response && response.code === 0) {
+                            li.remove();
+                            if (selectedFileField.value === filename) selectedFileField.value = "";
+                            logMessage(`✅ Datei "${filename}" erfolgreich gelöscht.`);
+                        } else if (response?.code === 1 && response.errors?.[0]?.msg?.includes("Not authorized")) {
+                            logMessage(`⚠️ Sie haben keine Berechtigung zum Löschen von "${filename}".`);
+                        } else {
+                            logMessage(
+                                `❌ Fehler beim Löschen von "${filename}": ${response?.errors?.[0]?.msg || "Unbekannter Fehler"
+                                }`
+                            );
+                        }
+                    } catch (err) {
+                        logMessage(`❌ Fehler beim Löschen von "${filename}": ${err.message}`);
                     }
                 });
 
@@ -112,8 +128,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Clear existing form content
             const formContainer = document.querySelector('#configForm fieldset');
-            const existingFields = formContainer.querySelectorAll('.form-group:not(:first-child)');
-            existingFields.forEach(field => field.remove());
+            const existingDynamicFields = formContainer.querySelectorAll('.dynamic-field');
+            existingDynamicFields.forEach(field => field.remove());
 
             // Generate form fields from config tree
             if (resp.data.items && Array.isArray(resp.data.items)) {
@@ -131,10 +147,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (item.type === 'category' && item.children && item.children.length > 0) {
                 // Create category section
                 const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'form-group';
+                categoryDiv.className = 'form-group dynamic-field'; 
                 categoryDiv.innerHTML = `
                     <legend class="text-secondary">${item.name}</legend>
-                `;
+                    `;
                 container.appendChild(categoryDiv);
 
                 // Generate fields for children
@@ -142,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 // Create form field based on type
                 const fieldDiv = document.createElement('div');
-                fieldDiv.className = 'form-group';
+                fieldDiv.className = 'form-group dynamic-field'; 
 
                 const fieldId = `field-${item.name.toLowerCase().replace(/\s+/g, '-')}`;
                 let fieldHTML = '';
@@ -150,29 +166,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 switch (item.type) {
                     case 'string':
                         fieldHTML = `
-                            <label for="${fieldId}">${item.name}:</label>
-                            <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
-                        `;
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                    `;
                         break;
                     case 'number':
                         fieldHTML = `
-                            <label for="${fieldId}">${item.name}:</label>
-                            <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
-                        `;
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                    `;
                         break;
                     case 'boolean':
                         fieldHTML = `
-                            <div class="form-check">
-                                <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ${item.value ? 'checked' : ''}>
-                                <label for="${fieldId}" class="form-check-label">${item.name}</label>
-                            </div>
-                        `;
+                        <div class="form-check">
+                            <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ${item.value ? 'checked' : ''}>
+                            <label for="${fieldId}" class="form-check-label">${item.name}</label>
+                        </div>
+                    `;
                         break;
                     default:
                         fieldHTML = `
-                            <label for="${fieldId}">${item.name}:</label>
-                            <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
-                        `;
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                    `;
                 }
 
                 fieldDiv.innerHTML = fieldHTML;
@@ -181,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // collect data before edited
     function collectFormData() {
         const formContainer = document.querySelector('#configForm fieldset');
         const fields = formContainer.querySelectorAll('input, select, textarea');
@@ -194,7 +211,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (field.type === 'checkbox') {
                     value = field.checked;
                 } else if (field.type === 'number') {
-                    value = parseFloat(value) || 0;
+                    value = parseFloat(field.value) || 0;
+                } else if (field.type === 'date') {
+                    value = field.value ? new Date(field.value) : null;
+                } else if (field.type === 'text') {
+                    value = field.value;
                 }
 
                 data[fieldName] = value;
@@ -325,27 +346,51 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // read uploaded file
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
     const btnUpload = Array.from(document.querySelectorAll("button.btn-secondary"))
         .find(b => b.textContent.includes("Datei hochladen"));
     if (btnUpload) {
-        btnUpload.addEventListener("click", () => {
+        btnUpload.addEventListener("click", async () => {
             const fileInput = document.createElement("input");
             fileInput.type = "file";
-            fileInput.onchange = () => {
+
+            fileInput.onchange = async () => {
                 const file = fileInput.files[0];
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                    service.sendRequest({
+                try {
+                    const content = await readFileAsText(file);
+
+                    const response = await service.sendRequest({
                         module: "fm",
-                        function: "upload_config",
-                        data: { auth: localStorage.getItem("authToken"), service: serviceName, config: file.name, content: reader.result }
+                        function: "create_config",
+                        data: {
+                            auth: localStorage.getItem("authToken"),
+                            service: serviceName,
+                            config: file.name,
+                            content
+                        }
                     });
-                    logMessage(`Datei hochgeladen: ${file.name}`);
-                    loadFileList();
-                };
-                reader.readAsText(file);
+
+                    if (response && response.code === 0) {
+                        logMessage(`✅ Datei "${file.name}" erfolgreich hochgeladen.`);
+                        loadFileList();
+                    } else {
+                        logMessage(`❌ Fehler beim Hochladen: ${response?.errors?.[0]?.msg || 'Unbekannter Fehler'}`);
+                    }
+                } catch (err) {
+                    logMessage(`❌ Fehler beim Hochladen der Datei: ${err.message}`);
+                }
             };
+
             fileInput.click();
         });
     }
@@ -359,7 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnBearbeiten) {
         btnBearbeiten.addEventListener("click", async () => {
             const configName = selectedFileField.value;
-            const items = collectFormData(); // Collect all fields -> extended fields too
+            const data = collectFormData(); // Collect all fields -> extended fields too
 
             //const items = {
             //    booleanOption: document.getElementById("boolean-option")?.checked,
@@ -368,12 +413,26 @@ document.addEventListener("DOMContentLoaded", () => {
             //    validUntil: document.getElementById("date-picker")?.value
             //};
 
-            service.sendRequest({
-                module: "fm",
-                function: "write_config",
-                data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
-            });
-            logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
+            try {
+                const response = await service.sendRequest({
+                    module: "fm",
+                    function: "write_config",
+                    data: {
+                        auth: localStorage.getItem("authToken"),
+                        service: serviceName,
+                        config: configName,
+                        items: data.items, 
+                        validate: true
+                    }
+                });
+                if (response && response.Code === 0) {
+                    logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
+                } else {
+                    logMessage(`❌ Fehler beim Speichern von "${configName}": ${err}`);
+                }
+            } catch (err) {
+                logMessage(`❌ Fehler beim Speichern von "${configName}": ${err}`);
+            }
         });
     }
 
