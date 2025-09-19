@@ -36,18 +36,6 @@ internal class AdminCreateUserRequestData {
 	internal string Security { get; set; } = "";
 }
 
-[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
-internal class AdminCreateUserResponseData {
-	[JsonProperty("uid", Required = Required.Always)]
-	internal string UID { get; set; } = "";
-
-	[JsonProperty("name", Required = Required.Always)]
-	internal string Name { get; set; } = "";
-
-	[JsonProperty("abbreviation", Required = Required.Always)]
-	internal string Abbreviation { get; set; } = "";
-}
-
 internal class AdminUpdateUserRequestData {
 	[JsonProperty("auth", Required = Required.Always)]
 	internal string Auth { get; set; } = "";
@@ -270,21 +258,21 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminListUsersRequestData reqdata = request.Data.ToObject<AdminListUsersRequestData>()!;
-		AdminListUsersResponseData respdata;
+		var converted = ToObject<AdminListUsersRequestData>( request.Data );
 
-		if (
-			string.IsNullOrWhiteSpace( reqdata.Auth )
-		) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		AdminListUsersResponseData respdata;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -361,18 +349,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminGetUserRequestData reqdata = request.Data.ToObject<AdminGetUserRequestData>()!;
+		var converted = ToObject<AdminGetUserRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -461,19 +451,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminCreateUserRequestData reqdata = request.Data.ToObject<AdminCreateUserRequestData>()!;
-		AdminCreateUserResponseData respdata;
+		var converted = ToObject<AdminCreateUserRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -517,7 +508,7 @@ internal class ModuleAdmin : Module {
 				return false;
 			}
 
-			respdata = new() {
+			var respdata = new StdUser() {
 				UID = (string)inserted.Data!.Rows[0]["uuid"],
 				Name = (string)inserted.Data!.Rows[0]["name"],
 				Abbreviation = (string)inserted.Data!.Rows[0]["abbreviation"]
@@ -554,19 +545,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminUpdateUserRequestData reqdata = request.Data.ToObject<AdminUpdateUserRequestData>()!;
-		AdminUpdateUserResponseData respdata;
+		var converted = ToObject<AdminUpdateUserRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -625,7 +617,7 @@ internal class ModuleAdmin : Module {
 			}
 
 			transaction.Commit();
-			respdata = new() {
+			var respdata = new StdUser() {
 				UID = (string)updated.Data!.Rows[0]["uuid"],
 				Name = (string)updated.Data!.Rows[0]["name"],
 				Abbreviation = (string)updated.Data!.Rows[0]["abbreviation"]
@@ -663,18 +655,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminDeleteUserRequestData reqdata = request.Data.ToObject<AdminDeleteUserRequestData>()!;
+		var converted = ToObject<AdminDeleteUserRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -745,19 +739,21 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminListGroupsRequestData reqdata = request.Data.ToObject<AdminListGroupsRequestData>()!;
-		AdminListGroupsResponseData respdata;
+		var converted = ToObject<AdminListGroupsRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		AdminListGroupsResponseData respdata;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -835,19 +831,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminGetGroupRequestData reqdata = request.Data.ToObject<AdminGetGroupRequestData>()!;
-		AdminGetGroupResponseData respdata;
+		var converted = ToObject<AdminGetGroupRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -888,7 +885,7 @@ internal class ModuleAdmin : Module {
 				};
 				return false;
 			}
-			respdata = new();
+
 			if ( selected.Data!.Rows.Count == 0 ) {
 				response = new Response() {
 					Module = Name,
@@ -899,7 +896,7 @@ internal class ModuleAdmin : Module {
 				};
 				return false;
 			}
-			respdata = new() {
+			var respdata = new StdGroup() {
 				UID = (string)selected.Data!.Rows[0]["uuid"],
 				Name = (string)selected.Data!.Rows[0]["name"],
 				Abbreviation = (string)selected.Data!.Rows[0]["abbreviation"],
@@ -937,19 +934,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminCreateGroupRequestData reqdata = request.Data.ToObject<AdminCreateGroupRequestData>()!;
-		AdminCreateGroupResponseData respdata;
+		var converted = ToObject<AdminCreateGroupRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -993,7 +991,7 @@ internal class ModuleAdmin : Module {
 				return false;
 			}
 
-			respdata = new() {
+			var respdata = new StdGroup() {
 				UID = (string)inserted.Data!.Rows[0]["uuid"],
 				Name = (string)inserted.Data!.Rows[0]["name"],
 				Abbreviation = (string)inserted.Data!.Rows[0]["abbreviation"],
@@ -1031,19 +1029,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminUpdateGroupRequestData reqdata = request.Data.ToObject<AdminUpdateGroupRequestData>()!;
-		AdminUpdateGroupResponseData respdata;
+		var converted = ToObject<AdminUpdateGroupRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -1102,7 +1101,7 @@ internal class ModuleAdmin : Module {
 			}
 
 			transaction.Commit();
-			respdata = new() {
+			var respdata = new StdGroup() {
 				UID = (string)updated.Data!.Rows[0]["uuid"],
 				Name = (string)updated.Data!.Rows[0]["name"],
 				Abbreviation = (string)updated.Data!.Rows[0]["abbreviation"],
@@ -1141,18 +1140,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminDeleteGroupRequestData reqdata = request.Data.ToObject<AdminDeleteGroupRequestData>()!;
+		var converted = ToObject<AdminDeleteGroupRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -1223,19 +1224,21 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminListUserGroupsRequestData reqdata = request.Data.ToObject<AdminListUserGroupsRequestData>()!;
-		AdminListUserGroupsResponseData respdata;
+		var converted = ToObject<AdminListUserGroupsRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		AdminListUserGroupsResponseData respdata;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -1314,19 +1317,21 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminListGroupUsersRequestData reqdata = request.Data.ToObject<AdminListGroupUsersRequestData>()!;
-		AdminListGroupUsersResponseData respdata;
+		var converted = ToObject<AdminListGroupUsersRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		AdminListGroupUsersResponseData respdata;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -1405,18 +1410,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminAddUserToGroupRequestData reqdata = request.Data.ToObject<AdminAddUserToGroupRequestData>()!;
+		var converted = ToObject<AdminAddUserToGroupRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {
@@ -1489,18 +1496,20 @@ internal class ModuleAdmin : Module {
 			return false;
 		}
 
-		AdminRemoveUserFromGroupRequestData reqdata = request.Data.ToObject<AdminRemoveUserFromGroupRequestData>()!;
+		var converted = ToObject<AdminRemoveUserFromGroupRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var token = Jwt.FromString( reqdata.Auth );
 		if ( token.IsExpired() ) {

@@ -163,19 +163,21 @@ internal class ModuleAuth : Module {
 			return false;
 		}
 
-		AuthLoginRequestData reqdata = request.Data.ToObject<AuthLoginRequestData>()!;
-		AuthLoginResponseData respdata;
+		var converted = ToObject<AuthLoginRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, "Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		AuthLoginResponseData respdata;
 
 		if ( reqdata.GrantType == "jwt" ) {
 			var jtoken = Jwt.FromString( reqdata.Security );

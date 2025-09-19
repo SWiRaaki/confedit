@@ -79,4 +79,33 @@ internal delegate bool ModuleProcess( object caller, Request request, out Respon
 internal abstract class Module {
 	internal abstract string Name { get; }
 	internal protected Dictionary<string, ModuleProcess> Function { get; protected set; } = new();
+
+	internal protected Result<T> ToObject<T>( JObject jobject ) {
+		try {
+			var json = jobject.ToObject<T>();
+			return new Result<T>() {
+				Code = 0,
+				Message = "OK",
+				Data = json
+			};
+		}
+		catch ( JsonException e ) {
+			var json = default(T);
+			Console.WriteLine( $"Newtonsoft Error: {e.Message}" );
+			return new Result<T>() {
+				Code = -1,
+				Message = e.Message,
+				Data = json
+			};
+		}
+		catch( Exception e ) {
+			var json = default(T);
+			Console.WriteLine( $"Error: {e.Message}" );
+			return new Result<T>() {
+				Code = -2,
+				Message = e.Message,
+				Data = json
+			};
+		}
+	}
 }

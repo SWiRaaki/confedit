@@ -95,19 +95,21 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
-		FmGetListRequestData reqdata = request.Data.ToObject<FmGetListRequestData>()!;
-		FmGetListResponseData respdata;
+		var converted = ToObject<FmGetListRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		FmGetListResponseData respdata;
 
 		try {
 			var token = Jwt.FromString( reqdata.Auth );
@@ -151,18 +153,20 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
-		FmGetConfigRequestData reqdata = request.Data.ToObject<FmGetConfigRequestData>()!;
+		var converted = ToObject<FmGetConfigRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, $"Failed retrieving configuration: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var extension = Path.GetExtension( reqdata.Configuration );
 		Program.ConfigProvider.TryGetValue( extension, out var provider );
@@ -290,18 +294,20 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
-		FmWriteConfigRequestData reqdata = request.Data.ToObject<FmWriteConfigRequestData>()!;
+		var converted = ToObject<FmWriteConfigRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, $"Failed retrieving list: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var extension = Path.GetExtension( reqdata.Configuration );
 		Program.ConfigProvider.TryGetValue( extension, out var provider );
@@ -428,19 +434,21 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
-		FmCreateConfigRequestData reqdata = request.Data.ToObject<FmCreateConfigRequestData>()!;
-		FmCreateConfigResponseData respdata;
+		var converted = ToObject<FmCreateConfigRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, $"Failed creating configuration: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
+		FmCreateConfigResponseData respdata;
 
 		var extension = Path.GetExtension( reqdata.Configuration );
 		Program.ConfigProvider.TryGetValue( extension, out var provider );
@@ -551,18 +559,20 @@ internal class ModuleFm : Module {
 			return false;
 		}
 
-		FmCreateConfigRequestData reqdata = request.Data.ToObject<FmCreateConfigRequestData>()!;
+		var converted = ToObject<FmCreateConfigRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
 				Code = RequestError.Validation,
 				Errors = {
-					new Error( ValidationError.InvalidRequestData, $"Failed deleting configuration: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
 				}
 			};
 			return false;
 		}
+
+		var reqdata = converted.Data!;
 
 		var extension = Path.GetExtension( reqdata.Configuration );
 		Program.ConfigProvider.TryGetValue( extension, out var provider );
