@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedFileField = document.getElementById("selected-file");
     const btnAddField = document.querySelector("#btnAddField");
 
-    const serviceName = window.currentService || "web";
+    const serviceName = window.currentService || "test";
 
     service.authenticate();
 
@@ -149,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'form-group dynamic-field'; 
                 categoryDiv.innerHTML = `
-                    <legend class="text-secondary">${item.name}</legend>
+                    <br><h2><legend class="text-secondary">${item.name}</legend><hr><br>
                     `;
                 container.appendChild(categoryDiv);
 
