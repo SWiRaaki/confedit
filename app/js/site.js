@@ -201,36 +201,48 @@ document.addEventListener("DOMContentLoaded", () => {
     function collectFormData() {
         const formContainer = document.querySelector('#configForm fieldset');
         const fields = formContainer.querySelectorAll('input, select, textarea');
-        const items = {};
+        const items = [];
 
         fields.forEach(field => {
-            if (field.id && field.id.startsWith('field-')) {
-                const fieldName = field.id.replace('field-', '');
-                let value;
+            if (!field.id || !field.id.startsWith('field-')) return;
 
-                switch (field.type) {
-                    case 'checkbox':
-                        value = field.checked;
-                        break;
-                    case 'number':
-                        if (field.step && field.step.includes('.')) {
-                            value = parseFloat(field.value) || 0.0;
-                        } else {
-                            value = parseInt(field.value, 10) || 0;
-                        }
-                        break;
-                    case 'date':
-                        value = field.value || null;
-                        break;
-                    default:
-                        value = field.value;
-                }
+            const fieldName = field.id.replace('field-', '');
+            let value;
+            let type = 'string';
 
-                items[fieldName] = value;
+            switch (field.type) {
+                case 'checkbox':
+                    value = field.checked;
+                    type = 'boolean';
+                    break;
+                case 'number':
+                    if (field.step && field.step.includes('.')) {
+                        value = parseFloat(field.value) || 0.0;
+                        type = 'float';
+                    } else {
+                        value = parseInt(field.value, 10) || 0;
+                        type = 'integer';
+                    }
+                    break;
+                case 'date':
+                    value = field.value || null;
+                    type = 'date';
+                    break;
+                default:
+                    value = field.value || '';
+                    type = 'string';
             }
+
+            items.push({
+                name: fieldName,
+                value: value,
+                type: type,
+                children: [],
+                meta: {}
+            });
         });
 
-        return items;
+        return { items };
     }
 
     function initSearch() {
@@ -433,13 +445,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         validate: true
                     }
                 });
-                if (response && response.Code === 0) {
+
+                const code = response?.code;
+                const errors = response?.errors;
+
+                if (response && code === 0) {
                     logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
                 } else {
-                    logMessage(`❌ Fehler beim Speichern von "${configName}": ${JSON.stringify(response.Errors)}`);
+                    const errorDetails = errors && errors.length > 0
+                        ? errors.map(e => `[${e.code}] ${e.msg}`).join("; ")
+                        : "Unbekannter Fehler";
+                    logMessage(`❌ Fehler beim Speichern von "${configName}": Code=${code}, Fehler=${errorDetails}`);
                 }
             } catch (err) {
-                logMessage(`❌ Fehler beim Speichern von "${configName}": ${err}`);
+                logMessage(`❌ Fehler beim Speichern von "${configName}": ${err.message ?? err}`);
             }
         });
     }
