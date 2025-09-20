@@ -201,28 +201,36 @@ document.addEventListener("DOMContentLoaded", () => {
     function collectFormData() {
         const formContainer = document.querySelector('#configForm fieldset');
         const fields = formContainer.querySelectorAll('input, select, textarea');
-        const data = {};
+        const items = {};
 
         fields.forEach(field => {
             if (field.id && field.id.startsWith('field-')) {
                 const fieldName = field.id.replace('field-', '');
-                let value = field.value;
+                let value;
 
-                if (field.type === 'checkbox') {
-                    value = field.checked;
-                } else if (field.type === 'number') {
-                    value = parseFloat(field.value) || 0;
-                } else if (field.type === 'date') {
-                    value = field.value ? new Date(field.value) : null;
-                } else if (field.type === 'text') {
-                    value = field.value;
+                switch (field.type) {
+                    case 'checkbox':
+                        value = field.checked;
+                        break;
+                    case 'number':
+                        if (field.step && field.step.includes('.')) {
+                            value = parseFloat(field.value) || 0.0;
+                        } else {
+                            value = parseInt(field.value, 10) || 0;
+                        }
+                        break;
+                    case 'date':
+                        value = field.value || null;
+                        break;
+                    default:
+                        value = field.value;
                 }
 
-                data[fieldName] = value;
+                items[fieldName] = value;
             }
         });
 
-        return data;
+        return items;
     }
 
     function initSearch() {
@@ -428,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (response && response.Code === 0) {
                     logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
                 } else {
-                    logMessage(`❌ Fehler beim Speichern von "${configName}": ${err}`);
+                    logMessage(`❌ Fehler beim Speichern von "${configName}": ${JSON.stringify(response.Errors)}`);
                 }
             } catch (err) {
                 logMessage(`❌ Fehler beim Speichern von "${configName}": ${err}`);
