@@ -167,11 +167,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 let fieldHTML = '';
 
                 switch (item.type) {
-
                     case 'bool':
                         fieldHTML = `
                         <div class="form-check">
-                            <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ${item.value ? 'checked' : ''}>
+                            <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ntype="${item.type}" ${item.value ? 'checked' : ''}>
                             <label for="${fieldId}" class="form-check-label">${item.name}</label>
                         </div>
                     `;
@@ -180,28 +179,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     case 'integer':
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
-                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" value="${item.value || ''}">
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" value="${item.value || ''}" ntype="${item.type}">
                     `;
                         break;
 
                     case 'unsigned':
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
-                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" min="0" value="${item.value || ''}">
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" min="0" value="${item.value || ''}" ntype="${item.type}">
                     `;
                         break;
 
                     case 'float':
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
-                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="any" value="${item.value || ''}">
-                    `;
-                        break;
-
-                    case 'null':
-                        fieldHTML = `
-                        <label for="${fieldId}">${item.name}:</label>
-                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="null" readonly>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="any" value="${item.value || ''}" ntype="${item.type}">
                     `;
                         break;
 
@@ -209,14 +201,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         const dateValue = item.value ? new Date(item.value).toISOString().slice(0, 16) : '';
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
-                        <input type="datetime-local" id="${fieldId}" name="${fieldId}" class="form-control" value="${dateValue}">
+                        <input type="datetime-local" id="${fieldId}" name="${fieldId}" class="form-control" value="${dateValue}" ntype="${item.type}">
                     `;
                         break;
 
                     case 'bytes':
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
-                        <input type="file" id="${fieldId}" name="${fieldId}" class="form-control" accept="*/*">
+                        <input type="file" id="${fieldId}" name="${fieldId}" class="form-control" accept="*/*" ntype="${item.type}">
                         ${item.value ? `<small class="form-text text-muted">Current: ${item.value}</small>` : ''}
                     `;
                         break;
@@ -225,14 +217,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         const listValue = Array.isArray(item.value) ? item.value.join('\n') : (item.value || '');
                         fieldHTML = `
                         <label for="${fieldId}">${item.name} (one per line):</label>
-                        <textarea id="${fieldId}" name="${fieldId}" class="form-control" rows="4" placeholder="Enter items, one per line">${listValue}</textarea>
+                        <textarea id="${fieldId}" name="${fieldId}" class="form-control" rows="4" placeholder="Enter items, one per line" ntype="${item.type}">${listValue}</textarea>
                     `;
                         break;
 
                     default:
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
-                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
+                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}" ntype="${item.type}">
                     `;
                 }
 
@@ -475,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
             //    booleanOption: document.getElementById("boolean-option")?.checked,
             //    serverName: document.getElementById("string-field")?.value,
             //    port: parseInt(document.getElementById("number-picker")?.value, 10),
-            //    validUntil: document.getElementById("date-picker")?.value
+            //    validUntil: document.getElementById("date-picker")?.default
             //};
 
             try {
