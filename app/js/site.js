@@ -237,31 +237,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function collectDivField(div, parentObj) {
         const input = div.querySelector('input, select, textarea');
         if (!input || !input.id || !input.id.startsWith('field-')) return;
-        const fieldName = input.id.replace('field-', '');
-        let value;
-        let type = 'string';
 
-        switch (input.type) {
-            case 'checkbox':
-                value = input.checked ? "true" : "false";
-                type = 'bool';
-                break;
-            case 'number':
-                if (input.step && input.step.includes('.')) {
-                    value = parseFloat(input.value).toString();
-                    type = 'float';
-                } else {
-                    value = parseInt(input.value, 10).toString();
-                    type = 'integer';
-                }
-                break;
-            case 'datetime-local':
-                value = input.value || "";
-                type = 'datetime';
-                break;
-            default:
-                value = input.value || "";
-                type = 'string';
+        const fieldName = input.id.replace('field-', '');
+        const type = input.getAttribute('ntype') || 'string';
+        let value = input.value || "";
+
+        if (type === 'bool') {
+            value = input.checked ? "true" : "false";
         }
 
         parentObj.children.push({
