@@ -167,19 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 let fieldHTML = '';
 
                 switch (item.type) {
-                    case 'string':
-                        fieldHTML = `
-                        <label for="${fieldId}">${item.name}:</label>
-                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
-                    `;
-                        break;
-
-                    case 'integer':
-                        fieldHTML = `
-                        <label for="${fieldId}">${item.name}:</label>
-                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
-                    `;
-                        break;
 
                     case 'bool':
                         fieldHTML = `
@@ -190,11 +177,55 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
                         break;
 
+                    case 'integer':
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" value="${item.value || ''}">
+                    `;
+                        break;
+
+                    case 'unsigned':
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" min="0" value="${item.value || ''}">
+                    `;
+                        break;
+
+                    case 'float':
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="any" value="${item.value || ''}">
+                    `;
+                        break;
+
+                    case 'null':
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="null" readonly>
+                    `;
+                        break;
+
                     case 'datetime':
                         const dateValue = item.value ? new Date(item.value).toISOString().slice(0, 16) : '';
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
                         <input type="datetime-local" id="${fieldId}" name="${fieldId}" class="form-control" value="${dateValue}">
+                    `;
+                        break;
+
+                    case 'bytes':
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="file" id="${fieldId}" name="${fieldId}" class="form-control" accept="*/*">
+                        ${item.value ? `<small class="form-text text-muted">Current: ${item.value}</small>` : ''}
+                    `;
+                        break;
+
+                    case 'list':
+                        const listValue = Array.isArray(item.value) ? item.value.join('\n') : (item.value || '');
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name} (one per line):</label>
+                        <textarea id="${fieldId}" name="${fieldId}" class="form-control" rows="4" placeholder="Enter items, one per line">${listValue}</textarea>
                     `;
                         break;
 
