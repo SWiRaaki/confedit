@@ -242,17 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function toCamelCase(str) {
-        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
-            index === 0 ? word.charAt(0).toLowerCase() : word.charAt(0).toUpperCase()
-        ).replace(/\s+/g, '');
-    }
-
     function collectDivField(div, parentObj) {
         const input = div.querySelector('input, select, textarea');
         if (!input || !input.id || !input.id.startsWith('field-')) return;
-
-        const fieldName = toCamelCase(input.id.replace('field-', ''));
+        const fieldName = input.id.replace('field-', '');
         let value;
         let type = 'string';
 
@@ -283,14 +276,13 @@ document.addEventListener("DOMContentLoaded", () => {
             name: fieldName,
             value: value,
             type: type,
-            children: [],
-            meta: {}
+            children: []
         });
     }
 
     function collectFieldCategory(fieldset, parentObj, parentName = null) {
         const legend = fieldset.querySelector('legend');
-        const categoryName = toCamelCase(legend ? legend.textContent.trim() : 'category');
+        const categoryName = legend ? legend.textContent.trim() : 'category';
 
         const categoryObj = {
             name: categoryName,
