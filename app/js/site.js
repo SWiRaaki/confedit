@@ -143,23 +143,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function generateFormFields(items, container) {
+        if (!items || !Array.isArray(items)) return;
+
         items.forEach(item => {
+            if (!item || !item.name) return;
+
             if (item.type === 'category' && item.children && item.children.length > 0) {
-                // Create category section
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'form-group dynamic-field'; 
-                categoryDiv.innerHTML = `
-                    <br><h2><legend class="text-secondary">${item.name}</legend><hr><br>
-                    `;
-                container.appendChild(categoryDiv);
+                // Create Category Fieldset
+                const categoryFieldset = document.createElement('fieldset');
+                categoryFieldset.className = 'form-group dynamic-field category-fieldset';
+                categoryFieldset.innerHTML = `
+                <legend class="text-secondary">${item.name}</legend>
+            `;
 
-                // Generate fields for children
-                generateFormFields(item.children, container);
+                // Add fields to the same category fieldset
+                generateFormFields(item.children, categoryFieldset);
+                container.appendChild(categoryFieldset);
             } else {
-                // Create form field based on type
+                // Create individual field
                 const fieldDiv = document.createElement('div');
-                fieldDiv.className = 'form-group dynamic-field'; 
-
+                fieldDiv.className = 'form-group dynamic-field';
                 const fieldId = `field-${item.name.toLowerCase().replace(/\s+/g, '-')}`;
                 let fieldHTML = '';
 
@@ -170,13 +173,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
                     `;
                         break;
-                    case 'number':
+
+                    case 'integer':
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
                         <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" value="${item.value || ''}">
                     `;
                         break;
-                    case 'boolean':
+
+                    case 'bool':
                         fieldHTML = `
                         <div class="form-check">
                             <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ${item.value ? 'checked' : ''}>
@@ -184,6 +189,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     `;
                         break;
+
+                    case 'datetime':
+                        const dateValue = item.value ? new Date(item.value).toISOString().slice(0, 16) : '';
+                        fieldHTML = `
+                        <label for="${fieldId}">${item.name}:</label>
+                        <input type="datetime-local" id="${fieldId}" name="${fieldId}" class="form-control" value="${dateValue}">
+                    `;
+                        break;
+
                     default:
                         fieldHTML = `
                         <label for="${fieldId}">${item.name}:</label>
