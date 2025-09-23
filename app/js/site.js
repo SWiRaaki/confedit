@@ -211,52 +211,91 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // collect data before edited
-    function collectFormData() {
-        const formContainer = document.querySelector('#configForm fieldset');
-        const fields = formContainer.querySelectorAll('input, select, textarea');
-        const items = [];
+    function toCamelCase(str) {
+        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
+            index === 0 ? word.charAt(0).toLowerCase() : word.charAt(0).toUpperCase()
+        ).replace(/\s+/g, '');
+    }
 
-        fields.forEach(field => {
-            if (!field.id || !field.id.startsWith('field-')) return;
+    function collectDivField(div, parentObj) {
+        const input = div.querySelector('input, select, textarea');
+        if (!input || !input.id || !input.id.startsWith('field-')) return;
 
-            const fieldName = field.id.replace('field-', '');
-            let value;
-            let type = 'string';
+        const fieldName = toCamelCase(input.id.replace('field-', ''));
+        let value;
+        let type = 'string';
 
-            switch (field.type) {
-                case 'checkbox':
-                    value = field.checked;
-                    type = 'boolean';
-                    break;
-                case 'number':
-                    if (field.step && field.step.includes('.')) {
-                        value = parseFloat(field.value) || 0.0;
-                        type = 'float';
-                    } else {
-                        value = parseInt(field.value, 10) || 0;
-                        type = 'integer';
-                    }
-                    break;
-                case 'date':
-                    value = field.value || null;
-                    type = 'date';
-                    break;
-                default:
-                    value = field.value || '';
-                    type = 'string';
+        switch (input.type) {
+            case 'checkbox':
+                value = input.checked ? "true" : "false";
+                type = 'bool';
+                break;
+            case 'number':
+                if (input.step && input.step.includes('.')) {
+                    value = parseFloat(input.value).toString();
+                    type = 'float';
+                } else {
+                    value = parseInt(input.value, 10).toString();
+                    type = 'integer';
+                }
+                break;
+            case 'datetime-local':
+                value = input.value || "";
+                type = 'datetime';
+                break;
+            default:
+                value = input.value || "";
+                type = 'string';
+        }
+
+        parentObj.children.push({
+            name: fieldName,
+            value: value,
+            type: type,
+            children: [],
+            meta: {}
+        });
+    }
+
+    function collectFieldCategory(fieldset, parentObj, parentName = null) {
+        const legend = fieldset.querySelector('legend');
+        const categoryName = toCamelCase(legend ? legend.textContent.trim() : 'category');
+
+        const categoryObj = {
+            name: categoryName,
+            type: 'category',
+            value: "",
+            children: [],
+            meta: parentName ? { ParentName: parentName } : {}
+        };
+
+        Array.from(fieldset.children).forEach(child => {
+            if (child.tagName === 'FIELDSET') {
+                collectFieldCategory(child, categoryObj, categoryName);
+            } else if (child.classList.contains('form-group')) {
+                collectDivField(child, categoryObj);
             }
-
-            items.push({
-                name: fieldName,
-                value: value,
-                type: type,
-                children: [],
-                meta: {}
-            });
         });
 
-        return { items };
+        parentObj.children.push(categoryObj);
+    }
+
+    // collect data before edited
+    function collectFormData() {
+        const formContainer = document.querySelector('#configForm');
+        if (!formContainer) return { data: { config: "", uid: crypto.randomUUID(), items: [] } };
+        const configName = selectedFileField.value;
+        const rootObj = { children: [] };
+
+        Array.from(formContainer.children).forEach(child => {
+            if (child.tagName === 'FIELDSET') {
+                collectFieldCategory(child, rootObj);
+            } else if (child.classList.contains('form-group')) {
+                collectDivField(child, rootObj);
+            }
+        });
+
+        return { data: { config: configName, uid: crypto.randomUUID(), items: rootObj.children } };
     }
 
     function initSearch() {
