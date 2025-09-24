@@ -66,14 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (!confirm(`Datei "${filename}" wirklich löschen?`)) return;
 
                     try {
-                        const response = await service.sendRequest({
-                            module: "fm",
-                            function: "delete_config",
-                            data: {
-                                auth: localStorage.getItem("authToken"),
-                                service: serviceName,
-                                config: filename
-                            }
+                        const response = await retryWithBackoff(async () => {
+                            return await service.sendRequest({
+                                module: "fm",
+                                function: "delete_config",
+                                data: {
+                                    auth: localStorage.getItem("authToken"),
+                                    service: serviceName,
+                                    config: filename
+                                }
+                            });
                         });
 
                         if (response && response.code === 0) {
@@ -83,13 +85,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         } else if (response?.code === 1 && response.errors?.[0]?.msg?.includes("Not authorized")) {
                             logMessage(`⚠️ Sie haben keine Berechtigung zum Löschen von "${filename}".`);
                         } else {
-                            logMessage(
-                                `❌ Fehler beim Löschen von "${filename}": ${response?.errors?.[0]?.msg || "Unbekannter Fehler"
-                                }`
-                            );
+                            const errorMsg = response?.errors?.[0]?.msg || "Unbekannter Fehler";
+                            if (errorMsg.includes('being used by another process')) {
+                                logMessage(`❌ Fehler: Die Datei "${filename}" ist gesperrt. Bitte schließen Sie andere Programme, die diese Datei verwenden könnten.`);
+                            } else {
+                                logMessage(`❌ Fehler beim Löschen von "${filename}": ${errorMsg}`);
+                            }
                         }
                     } catch (err) {
-                        logMessage(`❌ Fehler beim Löschen von "${filename}": ${err.message}`);
+                        if (err.message?.includes('being used by another process')) {
+                            logMessage(`❌ Fehler: Die Datei "${filename}" ist gesperrt. Bitte schließen Sie andere Programme, die diese Datei verwenden könnten.`);
+                        } else {
+                            logMessage(`❌ Fehler beim Löschen von "${filename}": ${err.message}`);
+                        }
                     }
                 });
 
@@ -119,6 +127,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
+            const errorMessage = handleApiError(resp, `Laden von "${filename}"`);
+            if (errorMessage) {
+                logMessage(errorMessage);
+                return;
+            }
+
             if (!resp || !resp.data) {
                 logMessage(`⚠️ Keine Daten für Datei ${filename}`);
                 return;
@@ -132,13 +146,20 @@ document.addEventListener("DOMContentLoaded", () => {
             existingDynamicFields.forEach(field => field.remove());
 
             // Generate form fields from config tree
-            if (resp.data.items && Array.isArray(resp.data.items)) {
-                generateFormFields(resp.data.items, formContainer);
+            // Handle both 'items' and 'Items' for backward compatibility
+            const items = resp.data.items || resp.data.Items;
+            if (items && Array.isArray(items)) {
+                generateFormFields(items, formContainer);
+                logMessage(`✅ Datei geladen: ${filename}`);
+            } else {
+                logMessage(`⚠️ Keine gültigen Konfigurationsdaten in ${filename}`);
             }
-
-            logMessage(`✅ Datei geladen: ${filename}`);
         } catch (err) {
-            logMessage(`❌ Fehler beim Laden von ${filename}: ${err.message}`);
+            if (err.message?.includes('Error reading JToken from JsonReader')) {
+                logMessage(`❌ Fehler: Die Datei "${filename}" enthält ungültiges JSON. Bitte überprüfen Sie die Datei.`);
+            } else {
+                logMessage(`❌ Fehler beim Laden von ${filename}: ${err.message}`);
+            }
         }
     }
 
@@ -156,6 +177,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 <legend class="text-secondary">${item.name}</legend>
             `;
 
+                // Add meta fields if present
+                if (item.meta && Object.keys(item.meta).length > 0) {
+                    Object.entries(item.meta).forEach(([key, value]) => {
+                        const metaDiv = document.createElement('div');
+                        metaDiv.className = 'form-group meta-field';
+                        metaDiv.innerHTML = `
+                            <label for="meta-${key}">${key} (Meta):</label>
+                            <input type="text" id="meta-${key}" name="meta-${key}" class="form-control" value="${value}" data-meta-for="${item.name}">
+                        `;
+                        categoryFieldset.appendChild(metaDiv);
+                    });
+                }
+
                 // Add fields to the same category fieldset
                 generateFormFields(item.children, categoryFieldset);
                 container.appendChild(categoryFieldset);
@@ -163,14 +197,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Create individual field
                 const fieldDiv = document.createElement('div');
                 fieldDiv.className = 'form-group dynamic-field';
-                const fieldId = `field-${item.name.toLowerCase().replace(/\s+/g, '-')}`;
+                 const fieldId = `field-${item.name.replace(/\s+/g, '-')}`;
                 let fieldHTML = '';
 
                 switch (item.type) {
                     case 'bool':
                         fieldHTML = `
                         <div class="form-check">
-                            <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ntype="${item.type}" ${item.value ? 'checked' : ''}>
+                            <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ntype="${item.type}" ${item.value === 'true' ? 'checked' : ''}>
                             <label for="${fieldId}" class="form-check-label">${item.name}</label>
                         </div>
                     `;
@@ -214,7 +248,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         break;
 
                     case 'list':
-                        const listValue = Array.isArray(item.value) ? item.value.join('\n') : (item.value || '');
+                        // Convert children array to textarea value
+                        const listValue = item.children && item.children.length > 0
+                            ? item.children.map(child => child.value).join('\n')
+                            : '';
                         fieldHTML = `
                         <label for="${fieldId}">${item.name} (one per line):</label>
                         <textarea id="${fieldId}" name="${fieldId}" class="form-control" rows="4" placeholder="Enter items, one per line" ntype="${item.type}">${listValue}</textarea>
@@ -238,25 +275,64 @@ document.addEventListener("DOMContentLoaded", () => {
         const input = div.querySelector('input, select, textarea');
         if (!input || !input.id || !input.id.startsWith('field-')) return;
 
-        const fieldName = input.id.replace('field-', '');
-        const type = input.getAttribute('ntype') || 'string';
-        let value = input.value || "";
+        const fieldName = input.id.replace('field-', '').replace(/-/g, ' ');
+        const ntype = input.getAttribute('ntype') || 'string';
+        let value;
 
-        if (type === 'bool') {
-            value = input.checked ? "true" : "false";
+        switch (ntype) {
+            case 'bool':
+                value = input.checked ? "true" : "false";
+                break;
+            case 'integer':
+            case 'unsigned':
+                value = input.value ? parseInt(input.value, 10).toString() : "0";
+                break;
+            case 'float':
+                value = input.value ? parseFloat(input.value).toString() : "0.0";
+                break;
+            case 'datetime':
+                value = input.value || "";
+                break;
+            case 'bytes':
+                // Handle file input - would need additional file reading logic
+                value = input.files && input.files[0] ? input.files[0].name : "";
+                break;
+            case 'list':
+                // Convert textarea to children array structure
+                const lines = input.value.split('\n').filter(line => line.trim());
+                const listItem = {
+                    name: fieldName,
+                    value: "",
+                    type: 'list',
+                    children: lines.map((line, index) => ({
+                        name: index.toString(),
+                        value: line.trim(),
+                        type: 'string',
+                        children: [],
+                        meta: {}
+                    })),
+                    meta: {}
+                };
+                parentObj.children.push(listItem);
+                return; // Early return to avoid duplicate push
+            default:
+                value = input.value || "";
         }
 
         parentObj.children.push({
             name: fieldName,
             value: value,
-            type: type,
-            children: []
+            type: ntype,
+            children: [],
+            meta: {}
         });
     }
 
     function collectFieldCategory(fieldset, parentObj, parentName = null) {
         const legend = fieldset.querySelector('legend');
-        const categoryName = legend ? legend.textContent.trim() : 'category';
+        const categoryNameRaw = legend ? legend.textContent.trim() : 'category';
+        const skipHeader = categoryNameRaw === 'Konfiguration bearbeiten';
+        const categoryName = skipHeader ? (parentName || 'category') : categoryNameRaw;
 
         const categoryObj = {
             name: categoryName,
@@ -266,45 +342,72 @@ document.addEventListener("DOMContentLoaded", () => {
             meta: parentName ? { ParentName: parentName } : {}
         };
 
+        // Collect meta fields
+        const metaFields = fieldset.querySelectorAll('.meta-field input');
+        metaFields.forEach(metaInput => {
+            if (metaInput.dataset.metaFor === categoryName) {
+                const metaKey = metaInput.id.replace('meta-', '');
+                categoryObj.meta[metaKey] = metaInput.value;
+            }
+        });
+
         Array.from(fieldset.children).forEach(child => {
             if (child.tagName === 'FIELDSET') {
                 collectFieldCategory(child, categoryObj, categoryName);
-            } else if (child.classList.contains('form-group')) {
+            } else if (child.classList.contains('form-group') && !child.classList.contains('meta-field')) {
                 collectDivField(child, categoryObj);
             }
         });
 
-        parentObj.children.push(categoryObj);
+        if (!skipHeader) {
+            parentObj.children.push(categoryObj);
+        } else {
+            parentObj.children.push(...categoryObj.children);
+        }
     }
+
 
     // collect data before edited
     function collectFormData() {
         const formContainer = document.querySelector('#configForm');
-        if (!formContainer) return { data: { config: "", uid: crypto.randomUUID(), items: [] } };
+        if (!formContainer) return {
+            data: {
+                config: "",
+                uid: crypto.randomUUID(),
+                Items: []
+            }
+        };
+
         const configName = selectedFileField.value;
         const rootObj = { children: [] };
 
         Array.from(formContainer.children).forEach(child => {
             if (child.tagName === 'FIELDSET') {
                 collectFieldCategory(child, rootObj);
-            } else if (child.classList.contains('form-group')) {
+            } else if (child.classList.contains('form-group') && !child.classList.contains('meta-field')) {
                 collectDivField(child, rootObj);
             }
         });
 
-        return { data: { config: configName, uid: crypto.randomUUID(), items: rootObj.children } };
+        return {
+            data: {
+                config: configName,
+                uid: crypto.randomUUID(),
+                Items: rootObj.children
+            }
+        };
     }
 
     function initSearch() {
         if (!searchInput || !dataTree) return;
         searchInput.addEventListener("input", () => {
-            const query = searchInput.value.toLowerCase();
+            const query = searchInput.value;
             const items = Array.from(dataTree.querySelectorAll("li"));
             items.forEach(li => {
                 const fileBtn = li.querySelector(".file-item");
                 if (!fileBtn) return;
 
-                const fileName = fileBtn.dataset.filename.toLowerCase();
+                const fileName = fileBtn.dataset.filename;
                 if (!query || fileName.includes(query)) {
                     li.style.display = "flex";
                     const text = `📄 ${fileBtn.dataset.filename}`;
@@ -321,6 +424,94 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+
+    // Helper function for retry logic with exponential backoff
+    async function retryWithBackoff(operation, maxRetries = 3, baseDelay = 1000) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                return await operation();
+            } catch (error) {
+                const isFileLockError = error.message?.includes('being used by another process') ||
+                    error.message?.includes('file is locked') ||
+                    error.message?.includes('access denied');
+
+                if (isFileLockError && attempt < maxRetries) {
+                    const delay = baseDelay * Math.pow(2, attempt - 1);
+                    logMessage(`⚠️ Datei gesperrt, versuche erneut in ${delay / 1000}s... (Versuch ${attempt}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+                throw error;
+            }
+        }
+    }
+
+    // Helper function to validate JSON data structure
+    function validateJsonStructure(data) {
+        try {
+            if (!data || typeof data !== 'object') {
+                return { valid: false, error: 'Daten sind leer oder ungültig' };
+            }
+
+            if (data.data && data.data.Items) {
+                // Validate Items array
+                if (!Array.isArray(data.data.Items)) {
+                    return { valid: false, error: 'Items muss ein Array sein' };
+                }
+
+                // Validate each item has required properties
+                for (let i = 0; i < data.data.Items.length; i++) {
+                    const item = data.data.Items[i];
+                    if (!item.name || typeof item.name !== 'string') {
+                        return { valid: false, error: `Item ${i} hat keinen gültigen Namen` };
+                    }
+                    if (!item.type || typeof item.type !== 'string') {
+                        return { valid: false, error: `Item ${i} hat keinen gültigen Typ` };
+                    }
+                    if (!Array.isArray(item.children)) {
+                        return { valid: false, error: `Item ${i} hat keine gültigen children` };
+                    }
+                }
+            }
+
+            return { valid: true };
+        } catch (error) {
+            return { valid: false, error: `Validierungsfehler: ${error.message}` };
+        }
+    }
+
+    // Helper function to handle API response errors
+    function handleApiError(response, operation) {
+        if (!response) {
+            return `❌ ${operation}: Keine Antwort vom Server`;
+        }
+
+        const code = response.code;
+        const errors = response.errors;
+
+        if (code === 0) {
+            return null; // Success
+        }
+
+        if (errors && errors.length > 0) {
+            const errorMsg = errors[0].msg || 'Unbekannter Fehler';
+
+            if (errorMsg.includes('Error reading JToken from JsonReader')) {
+                return `❌ ${operation}: Die Konfigurationsdatei enthält ungültiges JSON. Bitte überprüfen Sie die Datei.`;
+            } else if (errorMsg.includes('being used by another process')) {
+                return `❌ ${operation}: Die Datei ist gesperrt. Bitte schließen Sie andere Programme, die diese Datei verwenden könnten.`;
+            } else if (errorMsg.includes('Not authorized')) {
+                return `⚠️ ${operation}: Sie haben keine Berechtigung für diese Aktion.`;
+            } else if (errorMsg.includes('Failed to read configuration')) {
+                return `❌ ${operation}: Fehler beim Lesen der Konfiguration. Die Datei ist möglicherweise beschädigt.`;
+            } else {
+                return `❌ ${operation}: ${errorMsg}`;
+            }
+        }
+
+        return `❌ ${operation}: Unbekannter Fehler (Code: ${code})`;
+    }
+
     // fm.write_config
     if (form && btnSubmit) {
         btnSubmit.addEventListener("click", async (e) => {
@@ -334,15 +525,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     validUntil: document.getElementById("date-picker")?.value
                 };
 
-                await service.sendRequest({
-                    module: "fm",
-                    function: "write_config",
-                    data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
+                await retryWithBackoff(async () => {
+                    return await service.sendRequest({
+                        module: "fm",
+                        function: "write_config",
+                        data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
+                    });
                 });
 
                 logMessage(`✅ Konfigurationsdatei "${configName}" gespeichert.`);
             } catch (err) {
-                logMessage(`❌ Fehler beim Speichern: ${err.message}`);
+                if (err.message?.includes('being used by another process')) {
+                    logMessage(`❌ Fehler: Die Datei "${configName}" ist gesperrt. Bitte schließen Sie andere Programme, die diese Datei verwenden könnten.`);
+                } else {
+                    logMessage(`❌ Fehler beim Speichern: ${err.message}`);
+                }
             }
         });
     }
@@ -432,32 +629,66 @@ document.addEventListener("DOMContentLoaded", () => {
         btnUpload.addEventListener("click", async () => {
             const fileInput = document.createElement("input");
             fileInput.type = "file";
+            fileInput.accept = ".json,.xml,.yaml,.yml,.toml,.ini";
 
             fileInput.onchange = async () => {
                 const file = fileInput.files[0];
                 if (!file) return;
+
                 try {
                     const content = await readFileAsText(file);
 
-                    const response = await service.sendRequest({
-                        module: "fm",
-                        function: "create_config",
-                        data: {
-                            auth: localStorage.getItem("authToken"),
-                            service: serviceName,
-                            config: file.name,
-                            content
-                        }
+                    // Parse content based on file extension
+                    let parsedData;
+                    const extension = file.name.split('.').pop();
+
+                    switch (extension) {
+                        case 'json':
+                            try {
+                                parsedData = JSON.parse(content);
+                                // Validate JSON structure if it's a configuration file
+                                const validation = validateJsonStructure({ data: { Items: parsedData } });
+                                if (!validation.valid) {
+                                    logMessage(`❌ JSON-Validierungsfehler: ${validation.error}`);
+                                    return;
+                                }
+                            } catch (jsonError) {
+                                logMessage(`❌ Fehler: Die JSON-Datei "${file.name}" ist ungültig. ${jsonError.message}`);
+                                return;
+                            }
+                            break;
+                        default:
+                            // For other formats, send as raw content for server-side parsing
+                            parsedData = content;
+                    }
+
+                    const response = await retryWithBackoff(async () => {
+                        return await service.sendRequest({
+                            module: "fm",
+                            function: "create_config",
+                            data: {
+                                auth: localStorage.getItem("authToken"),
+                                service: serviceName,
+                                config: file.name,
+                                content: parsedData,
+                                format: extension
+                            }
+                        });
                     });
 
-                    if (response && response.code === 0) {
+                    const errorMessage = handleApiError(response, `Hochladen von "${file.name}"`);
+                    if (errorMessage) {
+                        logMessage(errorMessage);
+                    } else {
                         logMessage(`✅ Datei "${file.name}" erfolgreich hochgeladen.`);
                         loadFileList();
-                    } else {
-                        logMessage(`❌ Fehler beim Hochladen: ${response?.errors?.[0]?.msg || 'Unbekannter Fehler'}`);
                     }
                 } catch (err) {
-                    logMessage(`❌ Fehler beim Hochladen der Datei: ${err.message}`);
+                    if (err.message?.includes('Error reading JToken from JsonReader')) {
+                        logMessage(`❌ Fehler: Die Datei "${file.name}" enthält ungültiges JSON. Bitte überprüfen Sie die Datei.`);
+                    } else {
+                        logMessage(`❌ Fehler beim Hochladen der Datei: ${err.message}`);
+                    }
                 }
             };
 
@@ -474,41 +705,47 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnBearbeiten) {
         btnBearbeiten.addEventListener("click", async () => {
             const configName = selectedFileField.value;
-            const data = collectFormData(); // Collect all fields -> extended fields too
+            if (!configName) {
+                logMessage("❌ Keine Datei ausgewählt.");
+                return;
+            }
 
-            //const items = {
-            //    booleanOption: document.getElementById("boolean-option")?.checked,
-            //    serverName: document.getElementById("string-field")?.value,
-            //    port: parseInt(document.getElementById("number-picker")?.value, 10),
-            //    validUntil: document.getElementById("date-picker")?.default
-            //};
+            const collectedData = collectFormData();
+
+            // Validate data structure before sending
+            const validation = validateJsonStructure(collectedData);
+            if (!validation.valid) {
+                logMessage(`❌ Validierungsfehler: ${validation.error}`);
+                return;
+            }
 
             try {
-                const response = await service.sendRequest({
-                    module: "fm",
-                    function: "write_config",
-                    data: {
-                        auth: localStorage.getItem("authToken"),
-                        service: serviceName,
-                        config: configName,
-                        items: data.items, 
-                        validate: true
-                    }
+                const response = await retryWithBackoff(async () => {
+                    return await service.sendRequest({
+                        module: "fm",
+                        function: "write_config",
+                        data: {
+                            auth: localStorage.getItem("authToken"),
+                            service: serviceName,
+                            config: configName,
+                            Items: collectedData.data.Items,  // Korrigiert: Items statt items
+                            validate: true
+                        }
+                    });
                 });
 
-                const code = response?.code;
-                const errors = response?.errors;
-
-                if (response && code === 0) {
-                    logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
+                const errorMessage = handleApiError(response, `Speichern von "${configName}"`);
+                if (errorMessage) {
+                    logMessage(errorMessage);
                 } else {
-                    const errorDetails = errors && errors.length > 0
-                        ? errors.map(e => `[${e.code}] ${e.msg}`).join("; ")
-                        : "Unbekannter Fehler";
-                    logMessage(`❌ Fehler beim Speichern von "${configName}": Code=${code}, Fehler=${errorDetails}`);
+                    logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
                 }
             } catch (err) {
-                logMessage(`❌ Fehler beim Speichern von "${configName}": ${err.message ?? err}`);
+                if (err.message?.includes('being used by another process')) {
+                    logMessage(`❌ Fehler: Die Datei "${configName}" ist gesperrt. Bitte schließen Sie andere Programme, die diese Datei verwenden könnten.`);
+                } else {
+                    logMessage(`❌ Fehler beim Speichern von "${configName}": ${err.message ?? err}`);
+                }
             }
         });
     }
@@ -583,8 +820,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const formContainer = document.querySelector('#configForm fieldset');
-            const fieldId = `field-${fieldName.toLowerCase().replace(/\s+/g, '-')}`;
-
+            const fieldId = `field-${fieldName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}`;
             const fieldDiv = document.createElement("div");
             fieldDiv.className = "form-group d-flex align-items-center";
             fieldDiv.style.gap = "0.5rem";
@@ -594,7 +830,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 case 'Ja oder Nein':
                     inputElement = `
                     <div class="form-check" style="flex:1;">
-                        <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input">
+                        <input type="checkbox" id="${fieldId}" name="${fieldId}" class="form-check-input" ntype="bool">
                         <label for="${fieldId}" class="form-check-label">${fieldName}</label>
                     </div>`;
                     break;
@@ -602,30 +838,56 @@ document.addEventListener("DOMContentLoaded", () => {
                     inputElement = `
                     <div style="flex:1;">
                         <label for="${fieldId}">${fieldName}:</label>
-                        <input type="date" id="${fieldId}" name="${fieldId}" class="form-control">
+                        <input type="datetime-local" id="${fieldId}" name="${fieldId}" class="form-control" ntype="datetime">
                     </div>`;
                     break;
                 case 'Integer':
                     inputElement = `
                     <div style="flex:1;">
                         <label for="${fieldId}">${fieldName}:</label>
-                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control">
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" ntype="integer">
                     </div>`;
                     break;
                 case 'Unsigned':
+                    inputElement = `
+                    <div style="flex:1;">
+                        <label for="${fieldId}">${fieldName}:</label>
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="1" min="0" ntype="unsigned">
+                    </div>`;
+                    break;
                 case 'Float':
                     inputElement = `
                     <div style="flex:1;">
                         <label for="${fieldId}">${fieldName}:</label>
-                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control">
+                        <input type="number" id="${fieldId}" name="${fieldId}" class="form-control" step="any" ntype="float">
                     </div>`;
+                    break;
+                case 'Bytes':
+                    inputElement = `
+                    <div style="flex:1;">
+                        <label for="${fieldId}">${fieldName}:</label>
+                        <input type="file" id="${fieldId}" name="${fieldId}" class="form-control" accept="*/*" ntype="bytes">
+                    </div>`;
+                    break;
+                case 'Liste':
+                    inputElement = `
+                    <div style="flex:1;">
+                        <label for="${fieldId}">${fieldName} (one per line):</label>
+                        <textarea id="${fieldId}" name="${fieldId}" class="form-control" rows="4" placeholder="Enter items, one per line" ntype="list"></textarea>
+                    </div>`;
+                    break;
+                case 'Kategorie':
+                    inputElement = `
+                    <fieldset class="form-group dynamic-field category-fieldset" style="flex:1;">
+                        <legend class="text-secondary">${fieldName}</legend>
+                    </fieldset>`;
                     break;
                 default:
                     inputElement = `
                     <div style="flex:1;">
-                    <label for="${fieldId}">${fieldName}:</label>
-                    <input type="text" id="${fieldId}" name="${fieldId}" class="form-control">
-                </div>`;
+                        <label for="${fieldId}">${fieldName}:</label>
+                        <input type="text" id="${fieldId}" name="${fieldId}" class="form-control" ntype="string">
+                    </div>`;
             }
             const deleteBtn = document.createElement("button");
             deleteBtn.type = "button";
