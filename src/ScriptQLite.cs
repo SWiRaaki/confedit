@@ -46,11 +46,9 @@ internal class ScriptQLite : Script {
 
 	internal override Result<DataTable> RunScript( string file, Dictionary<string, string>? placeholder, params (string key, object value)[] parameters ) {
 		var script = File.ReadAllText( file );
-		Console.WriteLine( $"Script (raw):\n{script}\n---" );
 		if ( placeholder != null ) {
 			foreach( var pair in placeholder ) {
 				var pholderregex = new Regex( @"(.*?)(?<!\\)(?:\[\{)(" + pair.Key + @")(?:\}\])(.*)" );
-				Console.WriteLine( $"Key: {pair.Key}; Value: {pair.Value}" );
 				while( pholderregex.IsMatch( script ) ) {
 					script = pholderregex.Replace(
 						script,
@@ -60,7 +58,6 @@ internal class ScriptQLite : Script {
 				}
 			}
 		}
-		Console.WriteLine( $"Script (placeholder swapped):\n{script}\n---" );
 		var paramregex = new Regex( @"(.*?)(?<!\\)(\[GUID\])(.*)" );
 		while ( paramregex.IsMatch( script ) ) {
 			script = paramregex.Replace( 
@@ -69,7 +66,6 @@ internal class ScriptQLite : Script {
 				1
 			);
 		}
-		Console.WriteLine( $"Script (GUIDs created):\n{script}\n---" );
 		try {
 			var result = Program.Database.Select( script, parameters );
 			return new Result<DataTable>() {

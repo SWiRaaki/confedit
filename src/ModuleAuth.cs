@@ -105,7 +105,6 @@ internal class Jwt {
 		var headerb64 = ToBase64( headerjson );
 		var payloadb64 = ToBase64( payloadjson );
 		var secretb64 = ComputeSignatureSegment( headerb64, payloadb64 );
-		Console.WriteLine( $"{headerb64}.{payloadb64}.{secretb64}; Secret: {Program.Config.Secret}" );
 		return $"{headerb64}.{payloadb64}.{secretb64}";
 	}
 
