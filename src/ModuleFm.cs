@@ -502,7 +502,18 @@ internal class ModuleFm : Module {
 
 			path = Path.Combine( loc, reqdata.Configuration );
 
-			File.Create( path );
+			result = provider.Create( path );
+			if ( !result ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Module,
+					Errors = {
+						new Error( ModuleError.DataNotFound, $"Failed to create configuration: [{result.Code}] {result.Message}" )
+					}
+				};
+				return false;
+			}
+
 			result = Program.Script.RunScript(
 				"sql/fm_create_config.sql",
 				null,

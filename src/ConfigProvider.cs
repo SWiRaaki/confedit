@@ -40,6 +40,7 @@ internal class Result<T> : Result {
 }
 
 internal interface IConfigProvider {
+	Result Create( string file );
 	Result<ConfigTree> Load( string file );
 	Result Save( string file, ConfigTree data );
 }

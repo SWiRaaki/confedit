@@ -3,6 +3,26 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 internal class JsonConfigProvider : IConfigProvider {
+	public Result Create( string file ) {
+		try {
+			using ( var stream = File.Create( file ) ) {
+				var content = Encoding.UTF8.GetBytes( "{}" );
+				stream.Write( content, 0, content.Length );
+			}
+
+			return new Result() {
+				Code = 0,
+				Message = "OK"
+			};
+		}
+		catch( Exception e ) {
+			return new Result() {
+				Code = -1,
+				Message = e.Message
+			};
+		}
+	}
+
 	public Result<ConfigTree> Load( string file ) {
 		try {
 			var content = File.ReadAllText( file );

@@ -4,6 +4,25 @@ using Tomlyn;
 using Tomlyn.Model;
 
 internal class TomlConfigProvider: IConfigProvider {
+	public Result Create( string file ) {
+		try {
+			using ( var stream = File.Create( file ) ) {
+
+			}
+
+			return new Result() {
+				Code = 0,
+				Message = "OK"
+			};
+		}
+		catch( Exception e ) {
+			return new Result() {
+				Code = -1,
+				Message = e.Message
+			};
+		}
+	}
+
 	public Result<ConfigTree> Load( string file ) {
 		try {
 			var content = File.ReadAllText( file );

@@ -2,6 +2,23 @@ using System.Xml.Linq;
 using Newtonsoft.Json;
 
 internal class XmlConfigProvider : IConfigProvider {
+	public Result Create( string file ) {
+		try {
+			new XDocument( new XElement( "Config" )	).Save( file );
+
+			return new Result() {
+				Code = 0,
+				Message = "OK"
+			};
+		}
+		catch( Exception e ) {
+			return new Result() {
+				Code = -1,
+				Message = e.Message
+			};
+		}
+	}
+
 	public Result<ConfigTree> Load( string file ) {
 		try {
 			var content = File.ReadAllText( file );
