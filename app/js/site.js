@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("configForm");
     const btnCancel = document.getElementById("btnCancel");
-    const btnSubmit = document.getElementById("btnSubmit");
     const logBox = document.getElementById("log");
     const connectBtn = document.getElementById("connectBtn");
     const closeBtn = document.getElementById("closeBtn");
@@ -197,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Create individual field
                 const fieldDiv = document.createElement('div');
                 fieldDiv.className = 'form-group dynamic-field';
-                 const fieldId = `field-${item.name.replace(/\s+/g, '-')}`;
+                const fieldId = `field-${item.name.replace(/\s+/g, '-')}`;
                 let fieldHTML = '';
 
                 switch (item.type) {
@@ -512,38 +511,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return `❌ ${operation}: Unbekannter Fehler (Code: ${code})`;
     }
 
-    // fm.write_config
-    if (form && btnSubmit) {
-        btnSubmit.addEventListener("click", async (e) => {
-            e.preventDefault();
-            try {
-                const configName = selectedFileField.value;
-                const items = {
-                    booleanOption: document.getElementById("boolean-option")?.checked,
-                    serverName: document.getElementById("string-field")?.value,
-                    port: parseInt(document.getElementById("number-picker")?.value, 10),
-                    validUntil: document.getElementById("date-picker")?.value
-                };
-
-                await retryWithBackoff(async () => {
-                    return await service.sendRequest({
-                        module: "fm",
-                        function: "write_config",
-                        data: { auth: localStorage.getItem("authToken"), service: serviceName, config: configName, items, validate: true }
-                    });
-                });
-
-                logMessage(`✅ Konfigurationsdatei "${configName}" gespeichert.`);
-            } catch (err) {
-                if (err.message?.includes('being used by another process')) {
-                    logMessage(`❌ Fehler: Die Datei "${configName}" ist gesperrt. Bitte schließen Sie andere Programme, die diese Datei verwenden könnten.`);
-                } else {
-                    logMessage(`❌ Fehler beim Speichern: ${err.message}`);
-                }
-            }
-        });
-    }
-
     if (btnCancel) {
         btnCancel.addEventListener("click", () => {
             form?.reset();
@@ -699,11 +666,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnVersionen = Array.from(document.querySelectorAll("button.btn-info"))
         .find(b => b.textContent.includes("Versionen"));
     if (btnVersionen) btnVersionen.addEventListener("click", () => window.location.href = "versionen.html");
+    const btnSubmit = Array.from(document.querySelectorAll("button.btn-success"))
+        .find(b => b.textContent.includes("Absenden"));
+    if (btnSubmit) {
+        btnSubmit.addEventListener("click", async () => {
+            event.preventDefault();
 
-    const btnBearbeiten = Array.from(document.querySelectorAll("button.btn-primary"))
-        .find(b => b.textContent.includes("Bearbeiten"));
-    if (btnBearbeiten) {
-        btnBearbeiten.addEventListener("click", async () => {
             const configName = selectedFileField.value;
             if (!configName) {
                 logMessage("❌ Keine Datei ausgewählt.");
@@ -738,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (errorMessage) {
                     logMessage(errorMessage);
                 } else {
-                    logMessage(`✅ Datei "${configName}" über 'Bearbeiten' gespeichert.`);
+                    logMessage(`✅ Datei "${configName}" erfolgreich gespeichert.`);
                 }
             } catch (err) {
                 if (err.message?.includes('being used by another process')) {
