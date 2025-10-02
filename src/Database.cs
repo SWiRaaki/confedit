@@ -19,32 +19,23 @@ class Database {
 		return Connection.BeginTransaction();
 	}
 
-	public int Execute( string command ) {
+	public int Execute( string command, params (string key, object value)[] parameters ) {
 		var cmd = Connection.CreateCommand();
 		cmd.CommandText = command;
+
+		foreach( var parameter in parameters ) {
+			cmd.Parameters.AddWithValue( parameter.key, parameter.value );
+		}
 
 		return cmd.ExecuteNonQuery();
 	}
 
-	public int Execute( string command, SqliteTransaction transaction ) {
+	public int Execute( string command, SqliteTransaction transaction, params (string key, object value)[] parameters ) {
 		var cmd = Connection.CreateCommand();
 		cmd.CommandText = command;
 		cmd.Transaction = transaction;
 
 		return cmd.ExecuteNonQuery();
-	}
-
-	public DataTable Select( string command ) {
-		DataTable result = new();
-
-		var cmd = Connection.CreateCommand();
-		cmd.CommandText = command;
-
-		using ( var res = cmd.ExecuteReader() ) {
-			result.Load( res );
-		}
-
-		return result;
 	}
 
 	public DataTable Select( string command, params (string key, object value)[] parameters ) {

@@ -1,0 +1,78 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginForm");
+    const hint = document.getElementById("loginHint");
+
+    dataSender.connectWS("ws://localhost:8080");
+
+    const handleLoginResponse = (msg) => {
+        try {
+            const response = JSON.parse(msg.data);
+            console.log( "Handling Response", response );
+
+            if (response.code === 0 && response.data?.auth) {
+                console.log( "auth success" );
+                localStorage.setItem("authToken", response.data.auth);
+
+                hint.textContent = "Login erfolgreich. Weiterleitung...";
+                hint.className = "hint ok";
+
+                setTimeout(() => {
+                    window.location.href = "main.html";
+                }, 1000);
+            } else {
+                console.error( "auth error" );
+                hint.textContent = response.errors?.[0]?.msg || "Login fehlgeschlagen.";
+                hint.className = "hint error";
+            }
+        } catch (err) {
+            console.error(err);
+            hint.textContent = "Serverfehler – bitte später erneut versuchen.";
+            hint.className = "hint error";
+        }
+    };
+
+    const wsInterval = setInterval(() => {
+        if (dataSender.ws && dataSender.ws.readyState === WebSocket.OPEN) {
+            dataSender.ws.onmessage = handleLoginResponse;
+            clearInterval(wsInterval);
+        }
+    }, 100);
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const user = document.getElementById("user").value.trim();
+        const security = document.getElementById("security").value.trim();
+        const grantType = document.getElementById("grantType")?.value || "password"; 
+
+        // test
+        if (user === "admin" && security === "admin") {
+            hint.textContent = "Login erfolgreich. Weiterleitung...";
+            hint.className = "hint ok";
+            setTimeout(() => {
+                window.location.href = "../main.html";
+            }, 500);
+            return;
+        }
+
+        if (!user || !security) {
+            hint.textContent = "Bitte alle Felder ausfüllen.";
+            hint.className = "hint error";
+            return;
+        }
+
+        const request = {
+            module: "auth",
+            function: "login",
+            data: {
+                user: user,           
+                security: security,   
+                grant_type: grantType 
+            }
+        };
+
+
+        dataSender.sendRaw(request);
+    });
+
+});

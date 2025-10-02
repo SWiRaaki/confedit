@@ -9,6 +9,9 @@ internal record ReadResult( WebSocketMessageType Type, byte[] Data );
 internal class Client {
 	internal Client( WebSocket socket ) {
 		mySocket = socket;
+		mySerializerSettings = new JsonSerializerSettings() {
+			NullValueHandling = NullValueHandling.Ignore
+		};
 	}
 
 	internal async Task Handle() {
@@ -25,7 +28,7 @@ internal class Client {
 					Response response;
 					HandleRequest( request, out response );
 
-					text = JsonConvert.SerializeObject( response );
+					text = JsonConvert.SerializeObject( response, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore } );
                     byte[] responseBytes = Encoding.UTF8.GetBytes( text );
                     await mySocket.SendAsync( new ArraySegment<byte>( responseBytes ), WebSocketMessageType.Text, true, CancellationToken.None );
 					Console.WriteLine( $"[{ID}]: Responded: '{text}'" );
@@ -34,9 +37,9 @@ internal class Client {
 					Console.WriteLine( $"[{ID}]: Received {result.Data.Length} bytes as binary. Unsupported, ignored!" );
 					var response = new Response() {
 						Module = "ce",
-						Code = -1,
+						Code = RequestError.UnknownRequest,
 						Errors = {
-							new Error(-1, "Binary requests are not supported!" )
+							new Error( UnknownRequestError.BinaryNotSupported, "Binary requests are not supported!" )
 						}
 					};
 
@@ -71,17 +74,17 @@ internal class Client {
 		if ( !Program.Module.TryGetValue( request.Module, out module ) ) {
 			response = new Response() {
 				Module = "ce",
-				Code = -1,
+				Code = RequestError.UnknownRequest,
 				Errors = {
-					new Error( -2, $"{request.Module} is not a module ( May be WIP )" )
+					new Error( UnknownRequestError.UnknownModule, $"{request.Module} is not a module!" )
 				}
 			};
 		} else if ( !module.Function.TryGetValue( request.Function, out function ) ) {
 			response = new Response() {
 				Module = "ce",
-				Code = -1,
+				Code = RequestError.UnknownRequest,
 				Errors = {
-					new Error( -2, $"{request.Module}.{request.Function} is not a function ( May be WIP )" )
+					new Error( UnknownRequestError.UnknownFunction, $"{request.Module}.{request.Function} is not a function" )
 				}
 			};
 		} else {
@@ -110,6 +113,8 @@ internal class Client {
 				free = binary.Length - offset;
 			}
 			result = await mySocket.ReceiveAsync( new ArraySegment<byte>( binary, offset, free ), CancellationToken.None );
+			free   -= result.Count;
+			offset += result.Count;
 		}
 		return new ReadResult( result.MessageType, binary );
 	}
@@ -142,4 +147,5 @@ internal class Client {
 	internal Guid ID { get; set; }
 	
 	private WebSocket mySocket;
+	private JsonSerializerSettings mySerializerSettings;
 }

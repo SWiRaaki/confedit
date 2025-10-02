@@ -64,13 +64,47 @@ internal class Jwt {
         return Base64Url.EncodeToString( sig );
     }
 
+	internal bool IsExpired() {
+		var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return now > Payload.ExpirationTime;
+	}
+
+	internal bool IsAuthorized( string scope_namespace, string scope, string access ) {
+		try {
+			string script = File.ReadAllText( "sql/get_effective_auth.sql" );
+			DataTable result = Program.Database.Select( script, ( "@user_uuid", Payload.JWTID ) );
+
+			foreach( DataRow row in result.Rows ) {
+				string permissions = row["permissions"] as string ?? "";
+				string scope_ns = row["scope_ns"] as string ?? "";
+				string scope_name = row["scope_name"] as string ?? "";
+
+				if ( !permissions.Contains( access ) ) {
+					continue;
+				}
+				if ( scope_ns != "global" && scope_ns != scope_namespace ) {
+					continue;
+				}
+				if ( scope_name != "any" && scope_name != scope ) {
+					continue;
+				}
+
+				return true;
+			}
+		}
+		catch( Exception e ) {
+			Console.WriteLine( $"Authorization failed: {e.Message}" );
+		}
+
+		return false;
+	}
+
 	public override string ToString() {
 		var headerjson = JsonConvert.SerializeObject( Header );
 		var payloadjson = JsonConvert.SerializeObject( Payload );
 		var headerb64 = ToBase64( headerjson );
 		var payloadb64 = ToBase64( payloadjson );
 		var secretb64 = ComputeSignatureSegment( headerb64, payloadb64 );
-		Console.WriteLine( $"{headerb64}.{payloadb64}.{secretb64}; Secret: {Program.Config.Secret}" );
 		return $"{headerb64}.{payloadb64}.{secretb64}";
 	}
 
@@ -93,23 +127,20 @@ internal class Jwt {
 }
 
 internal class AuthLoginRequestData {
-	[JsonProperty("user")]
+	[JsonProperty("user", Required = Required.AllowNull)]
 	internal string User { get; set; } = "";
 
-	[JsonProperty("security")]
+	[JsonProperty("security", Required = Required.Always)]
 	internal string Security { get; set; } = "";
+
+	[JsonProperty("grant_type", Required = Required.Always)]
+	internal string GrantType { get; set; } = "";
 }
 
+[JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
 internal class AuthLoginResponseData {
 	[JsonProperty("auth")]
 	internal string Auth { get; set; } = "";
-}
-
-internal class AuthRegisterUserRequestData {
-}
-
-internal class AuthRegisterUserResponseData {
-
 }
 
 internal class ModuleAuth : Module {
@@ -123,23 +154,76 @@ internal class ModuleAuth : Module {
 		if ( request.Module != Name || request.Function != "login" ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -3, $"{request.Module}.{request.Function} mismatched signature {Name}.login" )
+					new Error( ValidationError.FunctionMismatch, $"{request.Module}.{request.Function} mismatched signature {Name}.login" )
 				}
 			};
 			return false;
 		}
 
-		AuthLoginRequestData reqdata = request.Data.ToObject<AuthLoginRequestData>()!;
-		AuthLoginResponseData respdata;
+		var converted = ToObject<AuthLoginRequestData>( request.Data );
 
-		if ( reqdata == null ) {
+		if ( !converted ) {
 			response = new Response() {
 				Module = Name,
-				Code = -2,
+				Code = RequestError.Validation,
 				Errors = {
-					new Error( -4, $"Failed authentification: Invalid request data provided!" )
+					new Error( ValidationError.InvalidRequestData , $"Failed retrieving configuration: Invalid request data provided! {converted.Message}" ),
+				}
+			};
+			return false;
+		}
+
+		var reqdata = converted.Data!;
+		AuthLoginResponseData respdata;
+
+		if ( reqdata.GrantType == "jwt" ) {
+			var jtoken = Jwt.FromString( reqdata.Security );
+			if ( jtoken.IsExpired() ) {
+				response = new Response() {
+					Module = Name,
+					Code = RequestError.Authorization,
+					Errors = {
+						new Error( AuthorizationError.Expired, "Session token is expired!" )
+					}
+				};
+				return false;
+			}
+
+			respdata = new() {
+				Auth = reqdata.Security
+			};
+
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.None,
+				Data = JObject.FromObject( respdata )
+			};
+
+			if ( caller is Client ) {
+				var client = (Client)caller;
+				client.ID = new( jtoken.Payload.JWTID );
+			}
+			return true;
+		}
+		else if ( reqdata.GrantType != "password" ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, $"Invalid request data provided: 'grant_type'='{reqdata.GrantType}' not valid!" )
+				}
+			};
+			return false;
+		}
+
+		if ( string.IsNullOrWhiteSpace( reqdata.User ) ) {
+			response = new Response() {
+				Module = Name,
+				Code = RequestError.Validation,
+				Errors = {
+					new Error( ValidationError.InvalidRequestData, "Invalid request data provided: 'user' not found!" )
 				}
 			};
 			return false;
@@ -152,9 +236,9 @@ internal class ModuleAuth : Module {
 		if ( user.Rows.Count == 0 ) {
 			response = new Response() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Authentification,
 				Errors = {
-					new Error( -5, $"Failed authentification: User not found!" )
+					new Error( AuthentificationError.UserNotFound, $"Failed authentification: User not found!" )
 				}
 			};
 			return false;
@@ -165,9 +249,9 @@ internal class ModuleAuth : Module {
 		if ( row["security"].ToString() != reqdata.Security ) {
 			response = new() {
 				Module = Name,
-				Code = -3,
+				Code = RequestError.Authentification,
 				Errors = {
-					new Error( -6, $"Failed authentification: invalid security!" )
+					new Error( AuthentificationError.InvalidSecurity, $"Failed authentification: Invalid security!" )
 				}
 			};
 			return false;
@@ -192,7 +276,7 @@ internal class ModuleAuth : Module {
 		};
 
 		if ( caller is Client ) {
-			Client client = (caller as Client)!;
+			var client = (Client)caller;
 			client.ID = new( row["uuid"].ToString() ?? "" );
 		}
 
@@ -201,14 +285,10 @@ internal class ModuleAuth : Module {
 
 		response = new() {
 			Module = Name,
-			Code = 0,
+			Code = RequestError.None,
 			Data = JObject.FromObject( respdata )
 		};
 
-		return true;
-	}
-
-	internal bool RegisterUser( object caller, Request request, Response response ) {
 		return true;
 	}
 }

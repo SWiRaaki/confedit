@@ -6,6 +6,25 @@ using YamlDotNet.Core.Events;
 using YamlDotNet.RepresentationModel;
 
 internal class YamlConfigProvider : IConfigProvider {
+	public Result Create( string file ) {
+		try {
+			using ( var stream = File.Create( file ) ) {
+
+			}
+
+			return new Result() {
+				Code = 0,
+				Message = "OK"
+			};
+		}
+		catch( Exception e ) {
+			return new Result() {
+				Code = -1,
+				Message = e.Message
+			};
+		}
+	}
+
 	public Result<ConfigTree> Load( string file ) {
 		try {
 			using var stream = File.OpenText( file );
@@ -96,9 +115,9 @@ internal class YamlConfigProvider : IConfigProvider {
 
 		if ( meta != null ) {
 			foreach( var entry in meta.Children ) {
-				var key = entry.Key as YamlScalarNode;
-				var val = entry.Value as YamlScalarNode;
-				node.Meta[key.Value] = val.Value;
+				var key = (YamlScalarNode)entry.Key;
+				var val = (YamlScalarNode)entry.Value;
+				node.Meta[key.Value!] = val.Value!;
 			}
 		}
 
@@ -129,8 +148,8 @@ internal class YamlConfigProvider : IConfigProvider {
 			}
 			break;
 		case YamlScalarNode itm:
-			var raw = itm.Value;
-			node.Value = raw;
+			var raw = itm.Value!;
+			node.Value = raw ?? "";
 
 			if ( raw == null ) {
 				node.Type = "null";
