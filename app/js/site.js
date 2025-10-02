@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dataTree = document.getElementById("data-tree");
     const selectedFileField = document.getElementById("selected-file");
     const btnAddField = document.querySelector("#btnAddField");
-
+    let showEditBtn = false;
     const serviceName = window.currentService || "test";
 
     service.authenticate();
@@ -37,6 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!resp || !resp.data || !resp.data.configurations) {
                 logMessage("⚠️ Keine Dateien gefunden.");
+                if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
                 return;
             }
 
@@ -107,9 +111,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
             dataTree.innerHTML = "<h3>Dateien</h3>";
             dataTree.appendChild(ul);
+            showEditBtn = false
         } catch (err) {
             logMessage("❌ Fehler beim Laden der Liste: " + err.message);
+            showEditBtn = false
+            if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+            if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+            if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+            if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
+            selectedFileField.value = "";
         }
+        if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+        if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+        if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+        if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
         initSearch()
     }
 
@@ -129,11 +144,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const errorMessage = handleApiError(resp, `Laden von "${filename}"`);
             if (errorMessage) {
                 logMessage(errorMessage);
+                if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
                 return;
             }
 
             if (!resp || !resp.data) {
                 logMessage(`⚠️ Keine Daten für Datei ${filename}`);
+                if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
                 return;
             }
 
@@ -150,8 +173,18 @@ document.addEventListener("DOMContentLoaded", () => {
             if (items && Array.isArray(items)) {
                 generateFormFields(items, formContainer);
                 logMessage(`✅ Datei geladen: ${filename}`);
+                showEditBtn = true
+                if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
             } else {
                 logMessage(`⚠️ Keine gültigen Konfigurationsdaten in ${filename}`);
+                showEditBtn = false
+                if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+                if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none"
+                if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
             }
         } catch (err) {
             if (err.message?.includes('Error reading JToken from JsonReader')) {
@@ -159,6 +192,11 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 logMessage(`❌ Fehler beim Laden von ${filename}: ${err.message}`);
             }
+            showEditBtn = false
+            if (btnSubmit) btnSubmit.style.display = showEditBtn ? "inline-block" : "none";
+            if (btnAddField) btnAddField.style.display = showEditBtn ? "inline-block" : "none";
+            if (btnCancel) btnCancel.style.display = showEditBtn ? "inline-block" : "none";
+            if (btnVersionen) btnVersionen.style.display = showEditBtn ? "inline-block" : "none";
         }
     }
 
