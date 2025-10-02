@@ -502,13 +502,13 @@ internal class ModuleFm : Module {
 
 			path = Path.Combine( loc, reqdata.Configuration );
 
-			result = provider.Create( path );
-			if ( !result ) {
+			var fresult = provider.Create( path );
+			if ( !fresult ) {
 				response = new Response() {
 					Module = Name,
 					Code = RequestError.Module,
 					Errors = {
-						new Error( ModuleError.DataNotFound, $"Failed to create configuration: [{result.Code}] {result.Message}" )
+						new Error( ModuleError.DataNotFound, $"Failed to create configuration: [{fresult.Code}] {fresult.Message}" )
 					}
 				};
 				return false;
